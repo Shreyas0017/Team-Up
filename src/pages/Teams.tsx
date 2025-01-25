@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, query, getDocs, where, addDoc } from 'firebase/firestore';
+import { collection, getDocs, addDoc } from 'firebase/firestore';
 import { Link,  } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { db } from '@/lib/firebase';
@@ -33,16 +33,18 @@ export default function Teams() {
 
       try {
         const usersRef = collection(db, 'users');
-        const q = query(usersRef, where('uid', '!=', user.uid));
-        const querySnapshot = await getDocs(q);
-        const usersData = querySnapshot.docs.map(doc => ({
-          uid: doc.id,
-          ...doc.data()
-        } as User));
+        const querySnapshot = await getDocs(usersRef);
+        const usersData = querySnapshot.docs
+          .filter(doc => doc.id !== user.uid) // Exclude current user
+          .map(doc => ({
+            uid: doc.id,
+            ...doc.data()
+          } as User));
+        
         setUsers(usersData);
+        setLoading(false);
       } catch (error) {
         console.error('Error fetching users:', error);
-      } finally {
         setLoading(false);
       }
     };

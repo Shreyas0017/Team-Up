@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { Users, Rocket, Calendar, MessageSquare } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { useAuth } from '@/context/AuthContext';
-import { TextGenerateEffect } from '@/components/ui/text-generate-effect';
+
 
 export default function Home() {
   const { user } = useAuth();

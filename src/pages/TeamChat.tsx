@@ -37,7 +37,7 @@ export default function TeamChat() {
           photoURL: '',
           experience: '',
           ...doc.data()
-        } as User));
+        })) as User[]; // Fixed to use proper type casting for User
         setMembers(membersData);
       }
     };
@@ -45,16 +45,13 @@ export default function TeamChat() {
     fetchTeam();
 
     const messagesRef = collection(db, 'teams', teamId, 'messages');
-    const messagesQuery = query(
-      messagesRef,
-      orderBy('createdAt', 'asc')
-    );
+    const messagesQuery = query(messagesRef, orderBy('createdAt', 'asc'));
 
     const unsubscribe = onSnapshot(messagesQuery, (snapshot) => {
       const newMessages = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
-      } as Message));
+      })) as Message[]; // Fixed to use proper type casting for Message
       setMessages(newMessages);
       scrollToBottom();
     });
@@ -72,14 +69,14 @@ export default function TeamChat() {
 
     setSending(true);
     try {
-        const messagesRef = collection(db, 'teams', teamId, 'messages');
-        await addDoc(messagesRef, {
-            senderId: user.uid,
-            senderName: user.displayName || 'Anonymous',
-            senderPhoto: user.photoURL || '',
-            content: newMessage.trim(),
-            createdAt: new Date().toISOString()
-        });
+      const messagesRef = collection(db, 'teams', teamId, 'messages');
+      await addDoc(messagesRef, {
+        senderId: user.uid,
+        senderName: user.displayName || 'Anonymous',
+        senderPhoto: user.photoURL || '',
+        content: newMessage.trim(),
+        createdAt: new Date().toISOString()
+      });
       setNewMessage('');
     } catch (error) {
       console.error('Error sending message:', error);
