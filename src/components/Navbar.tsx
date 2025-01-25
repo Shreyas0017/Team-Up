@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Users, UserCircle, LogIn, LogOut, Bell } from 'lucide-react';
+import { Users, UserCircle, LogIn, LogOut, MessageCircle } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { auth } from '@/lib/firebase';
 import { Button } from './ui/Button';
@@ -16,12 +16,18 @@ export default function Navbar() {
             <Users className="h-6 w-6 text-blue-600" />
             <span className="text-xl font-bold">TeamUp</span>
           </Link>
-
+          
           <div className="flex items-center space-x-4">
             {user ? (
               <>
                 <Link to="/teams">
                   <Button variant="ghost">Find Teams</Button>
+                </Link>
+                <Link to="/team-chat">
+                  <Button variant="ghost">
+                    <MessageCircle className="mr-2 h-5 w-5" />
+                    Chats
+                  </Button>
                 </Link>
                 <RequestNotifications />
                 <Link to="/profile">

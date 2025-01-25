@@ -20,6 +20,14 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/" element={<Home />} />
               <Route
+  path="/team-chat"
+  element={
+    <PrivateRoute>
+      <TeamChat />
+    </PrivateRoute>
+  }
+/>
+              <Route
                 path="/profile"
                 element={
                   <PrivateRoute>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, query, where, getDocs, addDoc, onSnapshot } from 'firebase/firestore';
+import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
 import { useAuth } from '@/context/AuthContext';
 import { db } from '@/lib/firebase';
 import { Button } from '@/components/ui/Button';
@@ -20,34 +20,64 @@ export default function CreateTeam() {
   useEffect(() => {
     if (!user) return;
 
-    // Set up real-time listeners for accepted requests
-    const requestsRef = collection(db, 'teamRequests');
-    const sentRequestsQuery = query(
-      requestsRef,
-      where('status', '==', 'accepted'),
-      where('senderId', '==', user.uid)
-    );
-    const receivedRequestsQuery = query(
-      requestsRef,
-      where('status', '==', 'accepted'),
-      where('receiverId', '==', user.uid)
-    );
+    const fetchConnections = async () => {
+      try {
+        setLoading(true);
+        const requestsRef = collection(db, 'teamRequests');
+        
+        // Fetch sent and received accepted requests
+        const sentRequestsQuery = query(
+          requestsRef,
+          where('senderId', '==', user.uid),
+          where('status', '==', 'accepted')
+        );
+        const receivedRequestsQuery = query(
+          requestsRef,
+          where('receiverId', '==', user.uid),
+          where('status', '==', 'accepted')
+        );
 
-    const unsubscribeSent = onSnapshot(sentRequestsQuery, async (snapshot) => {
-      await updateConnections();
-    });
+        const [sentRequestsSnapshot, receivedRequestsSnapshot] = await Promise.all([
+          getDocs(sentRequestsQuery),
+          getDocs(receivedRequestsQuery)
+        ]);
 
-    const unsubscribeReceived = onSnapshot(receivedRequestsQuery, async (snapshot) => {
-      await updateConnections();
-    });
+        // Collect unique user IDs from both sent and received requests
+        const connectedUserIds = new Set<string>();
+        sentRequestsSnapshot.docs.forEach(doc => {
+          connectedUserIds.add(doc.data().receiverId);
+        });
+        receivedRequestsSnapshot.docs.forEach(doc => {
+          connectedUserIds.add(doc.data().senderId);
+        });
 
-    // Initial fetch
-    updateConnections();
+        // Fetch user details for connected users
+        if (connectedUserIds.size > 0) {
+          const usersRef = collection(db, 'users');
+          const usersQuery = query(
+            usersRef,
+            where('uid', 'in', Array.from(connectedUserIds))
+          );
+          
+          const usersSnapshot = await getDocs(usersQuery);
+          const usersData = usersSnapshot.docs.map(doc => ({
+            uid: doc.id,
+            ...doc.data()
+          } as User));
 
-    return () => {
-      unsubscribeSent();
-      unsubscribeReceived();
+          setConnections(usersData);
+        } else {
+          setConnections([]);
+        }
+      } catch (error) {
+        console.error('Error fetching connections:', error);
+        setConnections([]);
+      } finally {
+        setLoading(false);
+      }
     };
+
+    fetchConnections();
   }, [user]);
 
   const updateConnections = async () => {
@@ -177,15 +207,15 @@ export default function CreateTeam() {
 
           {/* Member Selection */}
           <div>
-            <h2 className="text-lg font-semibold mb-4">Select Team Members</h2>
-            {connections.length === 0 ? (
-              <div className="text-center py-8 bg-gray-50 rounded-lg">
-                <Users className="mx-auto h-12 w-12 text-gray-400" />
-                <h3 className="mt-2 text-sm font-medium text-gray-900">No connections yet</h3>
-                <p className="mt-1 text-sm text-gray-500">
-                  Connect with other users to add them to your team
-                </p>
-              </div>
+          <h2 className="text-lg font-semibold mb-4">Select Team Members</h2>
+          {connections.length === 0 ? (
+            <div className="text-center py-8 bg-gray-50 rounded-lg">
+              <Users className="mx-auto h-12 w-12 text-gray-400" />
+              <h3 className="mt-2 text-sm font-medium text-gray-900">No connections yet</h3>
+              <p className="mt-1 text-sm text-gray-500">
+                Connect with other users to add them to your team
+              </p>
+            </div>
             ) : (
               <div className="grid gap-4">
                 {connections.map((connection) => (
