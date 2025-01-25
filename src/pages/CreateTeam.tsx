@@ -80,63 +80,6 @@ export default function CreateTeam() {
     fetchConnections();
   }, [user]);
 
-  const updateConnections = async () => {
-    if (!user) return;
-
-    try {
-      setLoading(true);
-      // Get accepted requests
-      const requestsRef = collection(db, 'teamRequests');
-      const sentRequestsQuery = query(
-        requestsRef,
-        where('status', '==', 'accepted'),
-        where('senderId', '==', user.uid)
-      );
-      const receivedRequestsQuery = query(
-        requestsRef,
-        where('status', '==', 'accepted'),
-        where('receiverId', '==', user.uid)
-      );
-
-      const [sentRequests, receivedRequests] = await Promise.all([
-        getDocs(sentRequestsQuery),
-        getDocs(receivedRequestsQuery)
-      ]);
-
-      // Get unique user IDs from requests
-      const connectedUserIds = new Set<string>();
-      sentRequests.docs.forEach(doc => {
-        connectedUserIds.add(doc.data().receiverId);
-      });
-      receivedRequests.docs.forEach(doc => {
-        connectedUserIds.add(doc.data().senderId);
-      });
-
-      if (connectedUserIds.size === 0) {
-        setConnections([]);
-        return;
-      }
-
-      // Fetch user details
-      const usersRef = collection(db, 'users');
-      const usersQuery = query(
-        usersRef,
-        where('uid', 'in', Array.from(connectedUserIds))
-      );
-      const usersSnapshot = await getDocs(usersQuery);
-      const usersData = usersSnapshot.docs.map(doc => ({
-        uid: doc.id,
-        ...doc.data()
-      } as User));
-
-      setConnections(usersData);
-    } catch (error) {
-      console.error('Error fetching connections:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const handleCreateTeam = async () => {
     if (!user || !teamName.trim() || selectedMembers.length === 0) return;
 

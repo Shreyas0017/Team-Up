@@ -18,7 +18,8 @@ const skillCategories: { id: SkillCategory; label: string; icon: React.ReactNode
 ];
 
 export default function Teams() {
- 
+  
+  
   const { user } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);

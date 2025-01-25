@@ -20,7 +20,7 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/" element={<Home />} />
               <Route
-  path="/team-chat"
+  path="/team/:teamId"
   element={
     <PrivateRoute>
       <TeamChat />

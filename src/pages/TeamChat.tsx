@@ -36,9 +36,11 @@ export default function TeamChat() {
           displayName: '',
           photoURL: '',
           experience: '',
-          ...doc.data()
-        })) as User[]; // Fixed to use proper type casting for User
+          ...doc.data(),
+        })) as unknown as User[];
+        
         setMembers(membersData);
+        
       }
     };
 
