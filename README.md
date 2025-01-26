@@ -5,6 +5,7 @@ Hackathon Team Builder is a web application designed to help college students fo
 
 ---
 ![image alt](https://github.com/Sahnik0/Team-Up/blob/5ee2ff82681fb08723e175db6fd3783b9a12b6c2/WhatsApp%20Image%202025-01-26%20at%2021.21.49_0095e22f.jpg)
+
 ![image alt](https://github.com/Sahnik0/Team-Up/blob/d3a5af315e6510d96187a6452d18adaea59a6e9a/WhatsApp%20Image%202025-01-26%20at%2021.22.27_9a591684.jpg)
 ## Features
 ### 1. **Skill-Based Matching**
@@ -150,7 +151,7 @@ service cloud.firestore {
 ---
 
 ## Contributors
-https://github.com/sanks011
+[Sankalpa Sarkar](https://github.com/sanks011)
 
 ---
 
@@ -163,5 +164,5 @@ This project is licensed under the MIT License. See the LICENSE file for details
 For queries or feedback, please reach out to:
 - Name: Sahnik Biswas
 - Email: biswassahnik@gmail.com
-- GitHub: https://github.com/Sahnik0
+- GitHub: [Sahnik Biswas](https://github.com/Sahnik0)
 
