@@ -42,6 +42,7 @@ export default function Login() {
   };
 
   return (
+    <div className="mt-20">
     <motion.div 
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -117,5 +118,6 @@ export default function Login() {
         </motion.div>
       </motion.div>
     </motion.div>
+    </div>
   );
 }

@@ -1,10 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
+import { 
+  collection, 
+  query, 
+  where, 
+  getDocs, 
+  addDoc 
+} from 'firebase/firestore';
 import { useAuth } from '@/context/AuthContext';
 import { db } from '@/lib/firebase';
 import { Button } from '@/components/ui/Button';
-import { User, ConnectionRequest } from '@/types';
+import { User, TeamRequest } from '@/types';
 import { Users, Plus, X, Check, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -18,57 +24,56 @@ export default function CreateTeam() {
   const [teamDescription, setTeamDescription] = useState('');
   const [creating, setCreating] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [acceptedConnections, setAcceptedConnections] = useState<ConnectionRequest[]>([]);
 
   useEffect(() => {
     if (!user) return;
 
     const fetchConnections = async () => {
+      if (!user) return;
+      
       try {
-        setLoading(true);
-        
-        // Fetch accepted connection requests
         const requestsRef = collection(db, 'teamRequests');
         const acceptedRequestsQuery = query(
-          requestsRef, 
-          where('status', '==', 'accepted'),
-          where('senderId', '==', user.uid) || 
-          where('receiverId', '==', user.uid)
+          requestsRef,
+          or(
+            where('senderId', '==', user.uid),
+            where('receiverId', '==', user.uid)
+          ),
+          where('status', '==', 'accepted')
         );
+    
         const acceptedRequestsSnapshot = await getDocs(acceptedRequestsQuery);
-        const acceptedRequests = acceptedRequestsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        } as ConnectionRequest));
-        setAcceptedConnections(acceptedRequests);
-
-        // Get unique connected user IDs
-        const connectedUserIds = new Set<string>();
-        acceptedRequests.forEach(request => {
-          if (request.senderId !== user.uid) connectedUserIds.add(request.senderId);
-          if (request.receiverId !== user.uid) connectedUserIds.add(request.receiverId);
+        const connectedUserIds = new Set();
+    
+        acceptedRequestsSnapshot.docs.forEach(doc => {
+          const request = doc.data() as TeamRequest;
+          const connectedUserId = request.senderId === user.uid
+            ? request.receiverId
+            : request.senderId;
+          connectedUserIds.add(connectedUserId);
         });
-
-        if (connectedUserIds.size === 0) {
+    
+        // Fetch detailed user information for connected users
+        if (connectedUserIds.size > 0) {
+          const usersRef = collection(db, 'users');
+          const connectedUsersQuery = query(
+            usersRef,
+            where('uid', 'in', Array.from(connectedUserIds))
+          );
+    
+          const connectedUsersSnapshot = await getDocs(connectedUsersQuery);
+          const connectedUsers = connectedUsersSnapshot.docs.map(doc => ({
+            uid: doc.id,
+            ...doc.data()
+          } as User));
+    
+          setConnections(connectedUsers);
+        } else {
           setConnections([]);
-          setLoading(false);
-          return;
         }
-
-        // Fetch user details for connected users
-        const usersRef = collection(db, 'users');
-        const usersSnapshot = await getDocs(
-          query(usersRef, where('uid', 'in', Array.from(connectedUserIds)))
-        );
-        
-        const connectionsData = usersSnapshot.docs.map(doc => ({
-          uid: doc.id,
-          ...doc.data()
-        } as User));
-
-        setConnections(connectionsData);
       } catch (error) {
         console.error('Error fetching connections:', error);
+        setConnections([]);
       } finally {
         setLoading(false);
       }
@@ -82,7 +87,7 @@ export default function CreateTeam() {
 
     setCreating(true);
     try {
-      // Create team (implementation remains the same as before)
+      // Create team
       const teamsRef = collection(db, 'teams');
       const teamDoc = await addDoc(teamsRef, {
         name: teamName.trim(),
@@ -109,8 +114,8 @@ export default function CreateTeam() {
       setCreating(false);
     }
   };
-
   const filteredConnections = connections.filter(connection => {
+    // Add null/undefined checks
     if (!connection) return false;
     
     const nameMatch = connection.displayName?.toLowerCase().includes(searchTerm.toLowerCase()) || false;
@@ -126,13 +131,14 @@ export default function CreateTeam() {
   }
 
   return (
+    <div className="mt-20">
     <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      className="max-w-5xl mx-auto px-4 py-8 bg-gradient-to-br from-blue-50 to-blue-100 min-h-screen"
-    >
-      <div className="bg-white rounded-2xl shadow-2xl p-8 space-y-8">
+    initial={{ opacity: 0, y: 20 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.5 }}
+    className="max-w-5xl mx-auto px-4 py-8 bg-gradient-to-br from-blue-50 to-blue-100 min-h-screen"
+  >
+    <div className="bg-white rounded-2xl shadow-2xl p-8 space-y-8">
       <motion.div 
         initial={{ opacity: 0, x: -50 }}
         animate={{ opacity: 1, x: 0 }}
@@ -217,17 +223,17 @@ export default function CreateTeam() {
           </div>
 
           {filteredConnections.length === 0 ? (
-          <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center py-12 bg-gray-50 rounded-xl"
-        >
-          <Users className="mx-auto h-16 w-16 text-gray-400" />
-          <h3 className="mt-4 text-xl font-medium text-gray-900">No connections found</h3>
-          <p className="mt-2 text-gray-600">
-            Connect with other users to add them to your team
-          </p>
-        </motion.div>
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center py-12 bg-gray-50 rounded-xl"
+            >
+              <Users className="mx-auto h-16 w-16 text-gray-400" />
+              <h3 className="mt-4 text-xl font-medium text-gray-900">No connections found</h3>
+              <p className="mt-2 text-gray-600">
+                Connect with other users to add them to your team
+              </p>
+            </motion.div>
           ) : (
             <AnimatePresence>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -339,5 +345,6 @@ export default function CreateTeam() {
       </div>
     </div>
   </motion.div>
+  </div>
 );
 }

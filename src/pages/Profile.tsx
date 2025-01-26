@@ -206,6 +206,7 @@ export default function Profile() {
       );
     };
   return (
+    <div className="mt-20">
     <div className="max-w-5xl mx-auto space-y-8 p-6 bg-gradient-to-br from-gray-50 to-blue-50 min-h-screen">
       <div className="bg-white rounded-3xl shadow-2xl p-8 border border-gray-100 transform transition-all hover:scale-[1.01]">
         <div className="flex items-center justify-between mb-8 animate-fade-in">
@@ -473,6 +474,7 @@ export default function Profile() {
   )}
 </div>
       </div>
+    </div>
     </div>
   );
 }

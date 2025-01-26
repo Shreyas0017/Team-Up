@@ -105,6 +105,7 @@ export default function TeamList() {
   }
 
   return (
+    <div className="mt-20">
     <div className="max-w-4xl mx-auto px-4 py-8">
       {/* Toast Notification */}
       {toast && (
@@ -237,6 +238,7 @@ export default function TeamList() {
           </div>
         )}
       </div>
+    </div>
     </div>
   );
 }
