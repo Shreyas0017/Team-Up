@@ -2,10 +2,7 @@ import { useState, useEffect } from 'react';
 import { 
   collection, 
   getDocs, 
-  addDoc, 
-  updateDoc, 
-  doc, 
-  deleteDoc, 
+  addDoc,  
   query, 
   where,
   serverTimestamp,
@@ -126,53 +123,6 @@ export default function Teams() {
       console.error('Error sending request:', error);
     } finally {
       setConnectingTo(null);
-    }
-  };
-
-  const handleAcceptRequest = async (request: TeamRequest) => {
-    if (!user || user.uid !== request.receiverId) return;
-
-    try {
-      const requestDoc = doc(db, 'teamRequests', request.id);
-      await updateDoc(requestDoc, { 
-        status: 'accepted',
-        acceptedAt: serverTimestamp()
-      });
-
-      setRequests(prev => prev.map(req => 
-        req.id === request.id ? { ...req, status: 'accepted' } : req
-      ));
-    } catch (error) {
-      console.error('Error accepting request:', error);
-    }
-  };
-
-  const handleRejectRequest = async (request: TeamRequest) => {
-    if (!user || user.uid !== request.receiverId) return;
-
-    try {
-      const requestDoc = doc(db, 'teamRequests', request.id);
-      await updateDoc(requestDoc, { 
-        status: 'rejected',
-        rejectedAt: serverTimestamp()
-      });
-
-      setRequests(prev => prev.filter(req => req.id !== request.id));
-    } catch (error) {
-      console.error('Error rejecting request:', error);
-    }
-  };
-
-  const handleRemoveConnection = async (request: TeamRequest) => {
-    if (!user) return;
-
-    try {
-      const requestDoc = doc(db, 'teamRequests', request.id);
-      await deleteDoc(requestDoc);
-
-      setRequests(prev => prev.filter(req => req.id !== request.id));
-    } catch (error) {
-      console.error('Error removing connection:', error);
     }
   };
 
@@ -378,122 +328,6 @@ export default function Teams() {
             </div>
           </div>
         ))}
-      </div>
-
-      {/* Received Connection Requests */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-        <h3 className="text-xl font-semibold text-gray-700 mb-6">
-          Received Connection Requests
-        </h3>
-        {requests.filter(req => 
-          req.receiverId === user?.uid && 
-          req.status === 'pending'
-        ).length > 0 ? (
-          requests
-            .filter(req => req.receiverId === user?.uid && req.status === 'pending')
-            .map((req) => (
-              <div 
-                key={req.id} 
-                className="flex justify-between items-center mb-4 p-3 bg-gray-50 rounded-lg"
-              >
-                <div className="flex items-center">
-                  {req.senderPhoto ? (
-                    <img 
-                      src={req.senderPhoto} 
-                      alt={req.senderName} 
-                      className="w-10 h-10 rounded-full mr-3 object-cover" 
-                    />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center mr-3">
-                      <Users className="h-5 w-5 text-gray-500" />
-                    </div>
-                  )}
-                  <div>
-                    <span className="font-semibold text-gray-700 block">
-                      {req.senderName}
-                    </span>
-                    <span className="text-sm text-gray-500">
-                      Wants to connect
-                    </span>
-                  </div>
-                </div>
-
-                <div className="flex gap-4">
-                  <Button
-                    onClick={() => handleAcceptRequest(req)}
-                    className="bg-green-600 text-white hover:bg-green-700"
-                  >
-                    Accept
-                  </Button>
-                  <Button
-                    onClick={() => handleRejectRequest(req)}
-                    className="bg-red-600 text-white hover:bg-red-700"
-                  >
-                    Decline
-                  </Button>
-                </div>
-              </div>
-            ))
-        ) : (
-          <div className="text-center py-6">
-            <Users className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-            <p className="text-gray-500">No pending connection requests</p>
-          </div>
-        )}
-      </div>
-
-      {/* Sent Connection Requests */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-        <h3 className="text-xl font-semibold text-gray-700 mb-6">
-          Sent Connection Requests
-        </h3>
-        {requests.filter(req => 
-          req.senderId === user?.uid && 
-          req.status === 'pending'
-        ).length > 0 ? (
-          requests
-            .filter(req => req.senderId === user?.uid && req.status === 'pending')
-            .map((req) => (
-              <div 
-                key={req.id} 
-                className="flex justify-between items-center mb-4 p-3 bg-gray-50 rounded-lg"
-              >
-                <div className="flex items-center">
-                  {req.receiverPhoto ? (
-                    <img 
-                      src={req.receiverPhoto} 
-                      alt={req.receiverName} 
-                      className="w-10 h-10 rounded-full mr-3 object-cover" 
-                    />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center mr-3">
-                      <Users className="h-5 w-5 text-gray-500" />
-                    </div>
-                  )}
-                  <div>
-                    <span className="font-semibold text-gray-700 block">
-                      {req.receiverName}
-                    </span>
-                    <span className="text-sm text-gray-500">
-                      Request Pending
-                    </span>
-                  </div>
-                </div>
-
-                <Button
-                  onClick={() => handleRemoveConnection(req)}
-                  className="bg-gray-600 text-white hover:bg-gray-700"
-                >
-                  Cancel Request
-                </Button>
-              </div>
-            ))
-        ) : (
-          <div className="text-center py-6">
-            <Users className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-            <p className="text-gray-500">No sent connection requests</p>
-          </div>
-        )}
       </div>
     </div>
   </div>
