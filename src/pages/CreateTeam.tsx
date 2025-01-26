@@ -5,7 +5,11 @@ import {
   query, 
   where, 
   getDocs, 
-  addDoc 
+  doc,
+  addDoc,
+  getDoc,
+  or,
+  and  
 } from 'firebase/firestore';
 import { useAuth } from '@/context/AuthContext';
 import { db } from '@/lib/firebase';
@@ -29,17 +33,17 @@ export default function CreateTeam() {
     if (!user) return;
 
     const fetchConnections = async () => {
-      if (!user) return;
-      
       try {
         const requestsRef = collection(db, 'teamRequests');
         const acceptedRequestsQuery = query(
           requestsRef,
-          or(
-            where('senderId', '==', user.uid),
-            where('receiverId', '==', user.uid)
-          ),
-          where('status', '==', 'accepted')
+          and(
+            where('status', '==', 'accepted'),
+            or(
+              where('senderId', '==', user.uid),
+              where('receiverId', '==', user.uid)
+            )
+          )
         );
     
         const acceptedRequestsSnapshot = await getDocs(acceptedRequestsQuery);
@@ -50,35 +54,36 @@ export default function CreateTeam() {
           const connectedUserId = request.senderId === user.uid
             ? request.receiverId
             : request.senderId;
+          
           connectedUserIds.add(connectedUserId);
         });
     
-        // Fetch detailed user information for connected users
         if (connectedUserIds.size > 0) {
           const usersRef = collection(db, 'users');
-          const connectedUsersQuery = query(
-            usersRef,
-            where('uid', 'in', Array.from(connectedUserIds))
+          
+          // Fetch users by document ID instead of 'uid' field
+          const connectedUsers = await Promise.all(
+            Array.from(connectedUserIds).map(async (userId) => {
+              const userDocRef = doc(db, 'users', userId);
+              const userDocSnap = await getDoc(userDocRef);
+              return {
+                uid: userDocSnap.id,
+                ...userDocSnap.data()
+              } as User;
+            })
           );
-    
-          const connectedUsersSnapshot = await getDocs(connectedUsersQuery);
-          const connectedUsers = connectedUsersSnapshot.docs.map(doc => ({
-            uid: doc.id,
-            ...doc.data()
-          } as User));
     
           setConnections(connectedUsers);
         } else {
           setConnections([]);
         }
       } catch (error) {
-        console.error('Error fetching connections:', error);
+        console.error('Detailed Fetch Error:', error);
         setConnections([]);
       } finally {
         setLoading(false);
       }
     };
-
     fetchConnections();
   }, [user]);
 
