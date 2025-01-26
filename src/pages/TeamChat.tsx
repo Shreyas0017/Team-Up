@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import { 
   collection, 
   query, 
@@ -9,13 +11,14 @@ import {
   addDoc, 
   getDocs,
   doc,
-  getDoc 
+  getDoc,
+  setDoc 
 } from 'firebase/firestore';
 import { useAuth } from '@/context/AuthContext';
 import { db } from '@/lib/firebase';
 import { Button } from '@/components/ui/Button';
 import { Team, Message, User } from '@/types';
-import { Send, Users, Info, Clock, UserPlus, Zap } from 'lucide-react';
+import { Send, Users, Info, Clock, UserPlus, Zap, Copy, Check, X } from 'lucide-react';
 import { formatDistance } from 'date-fns';
 
 function TeamChat() {
@@ -27,7 +30,62 @@ function TeamChat() {
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [showMemberDetails, setShowMemberDetails] = useState<string | null>(null);
+  const [inviteLink, setInviteLink] = useState<string>('');
+  const [showInviteLink, setShowInviteLink] = useState(false);
+  const [copyLinkStatus, setCopyLinkStatus] = useState<'copy' | 'copied'>('copy');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Function to generate invite link
+  const generateInviteLink = async () => {
+    if (!teamId || !user) return;
+
+    try {
+      // Create an invite document in a separate 'team-invites' collection
+      const inviteRef = doc(collection(db, 'team-invites'));
+      await setDoc(inviteRef, {
+        teamId: teamId,
+        createdBy: user.uid,
+        createdAt: new Date().toISOString(),
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days expiry
+      });
+
+      // Construct invite link with proper routing
+      const link = `/join-team/${inviteRef.id}`;
+      setInviteLink(link);
+      setShowInviteLink(true);
+      toast.success('Invite link generated successfully!');
+    } catch (error) {
+      console.error('Error generating invite link:', error);
+      toast.error('Failed to generate invite link');
+    }
+  };
+
+  // Function to copy invite link
+  const copyInviteLink = () => {
+    if (!inviteLink) return;
+
+    // Use full URL for copying
+    const fullLink = `${window.location.origin}${inviteLink}`;
+
+    navigator.clipboard.writeText(fullLink).then(() => {
+      setCopyLinkStatus('copied');
+      toast.success('Invite link copied to clipboard');
+      
+      // Reset copy status after 2 seconds
+      setTimeout(() => {
+        setCopyLinkStatus('copy');
+      }, 2000);
+    }).catch((err) => {
+      console.error('Failed to copy:', err);
+      toast.error('Failed to copy invite link');
+    });
+  };
+
+  // Close invite link section
+  const closeInviteLink = () => {
+    setShowInviteLink(false);
+    setInviteLink('');
+  };
 
   useEffect(() => {
     if (!teamId) return;
@@ -115,30 +173,70 @@ function TeamChat() {
 
   return (
     <div className="mt-20">
-    <div className="max-w-6xl mx-auto px-4 py-8 bg-gradient-to-br from-blue-50 to-blue-100 min-h-screen">
-      <div className="bg-white rounded-2xl shadow-2xl overflow-hidden border border-blue-100 h-[calc(100vh-4rem)] flex">
-        {/* Chat Area */}
-        <div className="flex-1 flex flex-col">
-          {/* Team Header */}
-          <div className="p-4 border-b bg-blue-50 flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl font-bold text-blue-800">{team.name}</h1>
-              {team.description && (
-                <div className="group relative">
-                  <p className="text-sm text-blue-600 mt-1 flex items-center cursor-help">
-                    <Info className="h-4 w-4 mr-1" />
-                    Team Description
-                    <span className="hidden group-hover:block absolute z-10 bg-blue-600 text-white text-xs p-2 rounded-md -bottom-10 left-0 shadow-lg">
-                      {team.description}
-                    </span>
-                  </p>
-                </div>
-              )}
+      <ToastContainer 
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
+      <div className="max-w-6xl mx-auto px-4 py-8 bg-gradient-to-br from-blue-50 to-blue-100 min-h-screen">
+        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden border border-blue-100 h-[calc(100vh-4rem)] flex">
+          {/* Chat Area */}
+          <div className="flex-1 flex flex-col">
+            {/* Team Header */}
+            <div className="p-4 border-b bg-blue-50 flex justify-between items-center">
+              <div>
+                <h1 className="text-2xl font-bold text-blue-800">{team?.name}</h1>
+              </div>
+              <Button 
+                variant="outline" 
+                className="text-blue-600 hover:bg-blue-50"
+                onClick={generateInviteLink}
+              >
+                <UserPlus className="h-5 w-5 mr-2" /> Invite Members
+              </Button>
             </div>
-            <Button variant="outline" className="text-blue-600 hover:bg-blue-50">
-              <UserPlus className="h-5 w-5 mr-2" /> Invite Members
-            </Button>
-          </div>
+
+            {/* Invite Link Section */}
+            {showInviteLink && inviteLink && (
+              <div className="p-4 bg-blue-50 flex items-center justify-between relative">
+                <div className="flex-1 mr-4">
+                  <p className="text-sm text-blue-800 font-medium">Share this invite link with your team</p>
+                  <input 
+                    type="text" 
+                    readOnly 
+                    value={`${window.location.origin}${inviteLink}`} 
+                    className="w-full text-sm bg-white rounded-md p-2 mt-2 truncate"
+                  />
+                </div>
+                <div className="flex space-x-2">
+                  <Button 
+                    variant="outline" 
+                    onClick={copyInviteLink}
+                    className="text-blue-600 hover:bg-blue-100"
+                  >
+                    {copyLinkStatus === 'copy' ? (
+                      <Copy className="h-5 w-5 mr-2" />
+                    ) : (
+                      <Check className="h-5 w-5 mr-2 text-green-500" />
+                    )}
+                    {copyLinkStatus === 'copy' ? 'Copy Link' : 'Copied!'}
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={closeInviteLink}
+                    className="text-red-600 hover:bg-red-50"
+                  >
+                    <X className="h-5 w-5" />
+                  </Button>
+                </div>
+              </div>
+            )}
 
           {/* Messages */}
           <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
