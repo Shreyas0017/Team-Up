@@ -2,7 +2,10 @@ import { useState, useEffect } from 'react';
 import { 
   collection, 
   getDocs, 
-  addDoc,  
+  addDoc, 
+  updateDoc, 
+  doc, 
+  deleteDoc, 
   query, 
   where,
   serverTimestamp,
@@ -15,7 +18,7 @@ import { Button } from '@/components/ui/Button';
 import { User, SkillCategory, TeamRequest } from '@/types';
 import { 
   Users, Search, Filter, Code, Palette, Phone, Database, 
-  Layout, Briefcase, LineChart 
+  Layout, Briefcase, LineChart , X
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -38,6 +41,7 @@ export default function Teams() {
   const [selectedExperience, setSelectedExperience] = useState<string[]>([]);
   const [connectingTo, setConnectingTo] = useState<string | null>(null);
   const [requests, setRequests] = useState<TeamRequest[]>([]);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -123,6 +127,53 @@ export default function Teams() {
       console.error('Error sending request:', error);
     } finally {
       setConnectingTo(null);
+    }
+  };
+
+  const handleAcceptRequest = async (request: TeamRequest) => {
+    if (!user || user.uid !== request.receiverId) return;
+
+    try {
+      const requestDoc = doc(db, 'teamRequests', request.id);
+      await updateDoc(requestDoc, { 
+        status: 'accepted',
+        acceptedAt: serverTimestamp()
+      });
+
+      setRequests(prev => prev.map(req => 
+        req.id === request.id ? { ...req, status: 'accepted' } : req
+      ));
+    } catch (error) {
+      console.error('Error accepting request:', error);
+    }
+  };
+
+  const handleRejectRequest = async (request: TeamRequest) => {
+    if (!user || user.uid !== request.receiverId) return;
+
+    try {
+      const requestDoc = doc(db, 'teamRequests', request.id);
+      await updateDoc(requestDoc, { 
+        status: 'rejected',
+        rejectedAt: serverTimestamp()
+      });
+
+      setRequests(prev => prev.filter(req => req.id !== request.id));
+    } catch (error) {
+      console.error('Error rejecting request:', error);
+    }
+  };
+
+  const handleRemoveConnection = async (request: TeamRequest) => {
+    if (!user) return;
+
+    try {
+      const requestDoc = doc(db, 'teamRequests', request.id);
+      await deleteDoc(requestDoc);
+
+      setRequests(prev => prev.filter(req => req.id !== request.id));
+    } catch (error) {
+      console.error('Error removing connection:', error);
     }
   };
 
@@ -250,15 +301,15 @@ export default function Teams() {
             </div>
           </div>
         </div>
-
        
       {/* User Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredUsers.map(targetUser => (
-          <div 
-            key={targetUser.uid} 
-            className="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow"
-          >
+  {filteredUsers.map(targetUser => (
+    <div 
+      key={targetUser.uid} 
+      className="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow"
+      onClick={() => setSelectedUser(targetUser)} // Add this line
+    >
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center">
                 {targetUser.photoURL ? (
@@ -329,6 +380,120 @@ export default function Teams() {
           </div>
         ))}
       </div>
+
+
+        {/* Profile Modal */}
+        {selectedUser && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex items-start justify-between mb-6">
+                  <div className="flex items-center">
+                    {selectedUser.photoURL ? (
+                      <img
+                        src={selectedUser.photoURL}
+                        alt={selectedUser.displayName}
+                        className="w-16 h-16 rounded-full"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center">
+                        <Users className="h-8 w-8 text-gray-400" />
+                      </div>
+                    )}
+                    <div className="ml-4">
+                      <h2 className="text-2xl font-bold">{selectedUser.displayName}</h2>
+                      <p className="text-gray-500 capitalize">{selectedUser.experience} Developer</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setSelectedUser(null)}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+
+                <div className="space-y-6">
+                  {selectedUser.bio && (
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">About</h3>
+                      <p className="text-gray-600">{selectedUser.bio}</p>
+                    </div>
+                  )}
+
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2">Skills</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedUser.skills?.map((skill, index) => (
+                        <span
+                          key={index}
+                          className="inline-flex items-center px-3 py-1 rounded-full bg-gray-100 text-gray-800"
+                        >
+                          {skillCategories.find(cat => cat.id === skill.category)?.icon}
+                          <span className="ml-2">{skill.name}</span>
+                          <span className="ml-1 text-gray-500">• {skill.level}</span>
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {(selectedUser.githubUrl || selectedUser.linkedinUrl || selectedUser.portfolioUrl) && (
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">Links</h3>
+                      <div className="space-y-2">
+                        {selectedUser.githubUrl && (
+                          <a
+                            href={selectedUser.githubUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline block"
+                          >
+                            GitHub Profile
+                          </a>
+                        )}
+                        {selectedUser.linkedinUrl && (
+                          <a
+                            href={selectedUser.linkedinUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline block"
+                          >
+                            LinkedIn Profile
+                          </a>
+                        )}
+                        {selectedUser.portfolioUrl && (
+                          <a
+                            href={selectedUser.portfolioUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline block"
+                          >
+                            Portfolio Website
+                          </a>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-6 flex justify-end">
+  {getRequestStatus(selectedUser) !== 'accepted' && (
+    <Button
+      onClick={(e) => {
+        e.stopPropagation();
+        handleConnect(selectedUser);
+        setSelectedUser(null);
+      }}
+      disabled={connectingTo === selectedUser.uid}
+    >
+      {connectingTo === selectedUser.uid ? 'Sending Request...' : 'Send Connection Request'}
+    </Button>
+  )}
+</div>
+              </div>
+            </div>
+          </div>
+        )}
     </div>
   </div>
 );
