@@ -4,9 +4,22 @@
 Hackathon Team Builder is a web application designed to help college students form effective teams for hackathons and group projects. The app enables skill-based matching, efficient scheduling, and seamless collaboration between team members, fostering a welcoming environment for both beginners and experienced individuals.
 
 ---
+
+
+
 ![image alt](https://github.com/Sahnik0/Team-Up/blob/5ee2ff82681fb08723e175db6fd3783b9a12b6c2/WhatsApp%20Image%202025-01-26%20at%2021.21.49_0095e22f.jpg)
 
+
+
 ![image alt](https://github.com/Sahnik0/Team-Up/blob/d3a5af315e6510d96187a6452d18adaea59a6e9a/WhatsApp%20Image%202025-01-26%20at%2021.22.27_9a591684.jpg)
+
+
+
+![image alt](https://github.com/Sahnik0/Team-Up/blob/493fa5e6d0aa5b7bf732860e3954901545e65f08/WhatsApp%20Image%202025-01-26%20at%2021.22.54_fae6dd5a.jpg)
+
+
+
+
 ## Features
 ### 1. **Skill-Based Matching**
 - Users create profiles highlighting their skills (e.g., web development, design, product management).
