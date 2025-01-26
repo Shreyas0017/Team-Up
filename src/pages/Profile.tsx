@@ -103,8 +103,10 @@ export default function Profile() {
     try {
       const docRef = doc(db, 'users', user.uid);
       await updateDoc(docRef, profile);
+      toast.success('Profile updated successfully');
     } catch (error) {
       console.error('Error updating profile:', error);
+      toast.error('Failed to update profile');
     } finally {
       setSaving(false);
     }
