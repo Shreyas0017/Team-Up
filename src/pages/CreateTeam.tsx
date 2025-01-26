@@ -4,7 +4,7 @@ import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
 import { useAuth } from '@/context/AuthContext';
 import { db } from '@/lib/firebase';
 import { Button } from '@/components/ui/Button';
-import { User } from '@/types';
+import { User} from '@/types';
 import { Users } from 'lucide-react';
 
 export default function CreateTeam() {
@@ -23,55 +23,35 @@ export default function CreateTeam() {
     const fetchConnections = async () => {
       try {
         setLoading(true);
+        // Get all accepted requests
         const requestsRef = collection(db, 'teamRequests');
-        
-        // Fetch sent and received accepted requests
-        const sentRequestsQuery = query(
-          requestsRef,
-          where('senderId', '==', user.uid),
-          where('status', '==', 'accepted')
-        );
-        const receivedRequestsQuery = query(
-          requestsRef,
-          where('receiverId', '==', user.uid),
-          where('status', '==', 'accepted')
-        );
-
-        const [sentRequestsSnapshot, receivedRequestsSnapshot] = await Promise.all([
-          getDocs(sentRequestsQuery),
-          getDocs(receivedRequestsQuery)
+        const [sentRequests, receivedRequests] = await Promise.all([
+          getDocs(query(requestsRef, where('senderId', '==', user.uid), where('status', '==', 'accepted'))),
+          getDocs(query(requestsRef, where('receiverId', '==', user.uid), where('status', '==', 'accepted')))
         ]);
 
-        // Collect unique user IDs from both sent and received requests
+        // Get unique user IDs from requests
         const connectedUserIds = new Set<string>();
-        sentRequestsSnapshot.docs.forEach(doc => {
-          connectedUserIds.add(doc.data().receiverId);
-        });
-        receivedRequestsSnapshot.docs.forEach(doc => {
-          connectedUserIds.add(doc.data().senderId);
-        });
+        sentRequests.docs.forEach(doc => connectedUserIds.add(doc.data().receiverId));
+        receivedRequests.docs.forEach(doc => connectedUserIds.add(doc.data().senderId));
 
-        // Fetch user details for connected users
-        if (connectedUserIds.size > 0) {
-          const usersRef = collection(db, 'users');
-          const usersQuery = query(
-            usersRef,
-            where('uid', 'in', Array.from(connectedUserIds))
-          );
-          
-          const usersSnapshot = await getDocs(usersQuery);
-          const usersData = usersSnapshot.docs.map(doc => ({
-            uid: doc.id,
-            ...doc.data()
-          } as User));
-
-          setConnections(usersData);
-        } else {
+        if (connectedUserIds.size === 0) {
           setConnections([]);
+          setLoading(false);
+          return;
         }
+
+        // Fetch user details for all connections
+        const usersRef = collection(db, 'users');
+        const usersSnapshot = await getDocs(query(usersRef, where('uid', 'in', Array.from(connectedUserIds))));
+        const connectionsData = usersSnapshot.docs.map(doc => ({
+          uid: doc.id,
+          ...doc.data()
+        } as User));
+
+        setConnections(connectionsData);
       } catch (error) {
         console.error('Error fetching connections:', error);
-        setConnections([]);
       } finally {
         setLoading(false);
       }
@@ -95,10 +75,9 @@ export default function CreateTeam() {
         createdAt: new Date().toISOString()
       });
 
-      // Create initial welcome message
-      const messagesRef = collection(db, 'messages');
+      // Create initial welcome message in subcollection
+      const messagesRef = collection(db, 'teams', teamDoc.id, 'messages');
       await addDoc(messagesRef, {
-        teamId: teamDoc.id,
         senderId: user.uid,
         senderName: user.displayName,
         senderPhoto: user.photoURL,
@@ -150,39 +129,59 @@ export default function CreateTeam() {
 
           {/* Member Selection */}
           <div>
-          <h2 className="text-lg font-semibold mb-4">Select Team Members</h2>
-          {connections.length === 0 ? (
-            <div className="text-center py-8 bg-gray-50 rounded-lg">
-              <Users className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">No connections yet</h3>
-              <p className="mt-1 text-sm text-gray-500">
-                Connect with other users to add them to your team
-              </p>
-            </div>
+            <h2 className="text-lg font-semibold mb-4">Select Team Members</h2>
+            {connections.length === 0 ? (
+              <div className="text-center py-8 bg-gray-50 rounded-lg">
+                <Users className="mx-auto h-12 w-12 text-gray-400" />
+                <h3 className="mt-2 text-sm font-medium text-gray-900">No connections yet</h3>
+                <p className="mt-1 text-sm text-gray-500">
+                  Connect with other users to add them to your team
+                </p>
+              </div>
             ) : (
               <div className="grid gap-4">
                 {connections.map((connection) => (
                   <div
                     key={connection.uid}
-                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+                    className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
                   >
-                    <div className="flex items-center space-x-3">
+                    <div className="flex items-center space-x-4">
                       {connection.photoURL ? (
                         <img
                           src={connection.photoURL}
                           alt={connection.displayName}
-                          className="h-10 w-10 rounded-full"
+                          className="h-12 w-12 rounded-full"
                         />
                       ) : (
-                        <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center">
-                          <Users className="h-5 w-5 text-gray-400" />
+                        <div className="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center">
+                          <Users className="h-6 w-6 text-gray-400" />
                         </div>
                       )}
                       <div>
-                        <h3 className="font-medium">{connection.displayName}</h3>
-                        <p className="text-sm text-gray-500 capitalize">
-                          {connection.experience} Developer
-                        </p>
+                        <h3 className="font-medium text-gray-900">{connection.displayName}</h3>
+                        <div className="mt-1 space-y-1">
+                          <p className="text-sm text-gray-500 capitalize">
+                            {connection.experience} Developer
+                          </p>
+                          {connection.bio && (
+                            <p className="text-sm text-gray-500 line-clamp-2">{connection.bio}</p>
+                          )}
+                          <div className="flex flex-wrap gap-2">
+                            {connection.skills?.slice(0, 3).map((skill, index) => (
+                              <span
+                                key={index}
+                                className="inline-flex items-center px-2 py-1 rounded-md bg-blue-100 text-blue-800 text-xs"
+                              >
+                                {skill.name}
+                              </span>
+                            ))}
+                            {connection.skills?.length > 3 && (
+                              <span className="text-xs text-gray-500">
+                                +{connection.skills.length - 3} more
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </div>
                     <Button
