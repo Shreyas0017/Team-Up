@@ -104,6 +104,7 @@ function TeamChat() {
   }
 
   return (
+    <div className="mt-20">
     <div className="max-w-6xl mx-auto px-4 py-8 bg-gradient-to-br from-blue-50 to-blue-100 min-h-screen">
       <div className="bg-white rounded-2xl shadow-2xl overflow-hidden border border-blue-100 h-[calc(100vh-4rem)] flex">
         {/* Chat Area */}
@@ -254,6 +255,7 @@ function TeamChat() {
           </div>
         </div>
       </div>
+    </div>
     </div>
   );
 }

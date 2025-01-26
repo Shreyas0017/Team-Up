@@ -5,7 +5,11 @@ import { useAuth } from '@/context/AuthContext';
 import { db } from '@/lib/firebase';
 import { Button } from '@/components/ui/Button';
 import { User, SkillCategory } from '@/types';
-import { Users, Search, Filter, Code, Palette, Phone, Database, Layout, Briefcase, LineChart } from 'lucide-react';
+import { 
+  Users, Search, Filter, Code, Palette, Phone, Database, 
+  Layout, Briefcase, LineChart 
+} from 'lucide-react';
+import { motion} from 'framer-motion';
 
 const skillCategories: { id: SkillCategory; label: string; icon: React.ReactNode }[] = [
   { id: 'frontend', label: 'Frontend', icon: <Layout className="h-5 w-5" /> },
@@ -26,7 +30,7 @@ export default function Teams() {
   const [selectedExperience, setSelectedExperience] = useState<string[]>([]);
   const [connectingTo, setConnectingTo] = useState<string | null>(null);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-
+  
   useEffect(() => {
     const fetchUsers = async () => {
       if (!user) return;
@@ -108,16 +112,24 @@ export default function Teams() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-3xl font-bold">Find Teammates</h1>
+    <div className="mt-20">
+    <div className="max-w-7xl mx-auto px-4 py-8 bg-gradient-to-br from-gray-50 to-blue-50 min-h-screen">
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="flex justify-between items-center mb-8"
+      >
+        <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
+          Find Teammates
+        </h1>
         <Link to="/create-team">
-          <Button>
+          <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all text-white">
             <Users className="mr-2 h-5 w-5" />
             Create Team
           </Button>
         </Link>
-      </div>
+      </motion.div>
 
       {/* Search and Filters */}
       <div className="bg-white rounded-lg shadow-md p-6 mb-8">
@@ -158,6 +170,8 @@ export default function Teams() {
             ))}
           </div>
         </div>
+
+        
 
         {/* Experience Level */}
         <div>
@@ -362,6 +376,7 @@ export default function Teams() {
           </p>
         </div>
       )}
+    </div>
     </div>
   );
 }

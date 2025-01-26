@@ -56,8 +56,11 @@ export default function CreateTeam() {
       } finally {
         setLoading(false);
       }
+      
     };
 
+    
+    
     fetchConnections();
   }, [user]);
 
@@ -110,6 +113,7 @@ export default function CreateTeam() {
   }
 
   return (
+    <div className="mt-20">
     <motion.div 
     initial={{ opacity: 0, y: 20 }}
     animate={{ opacity: 1, y: 0 }}
@@ -323,5 +327,6 @@ export default function CreateTeam() {
       </div>
     </div>
   </motion.div>
+  </div>
 );
 }
