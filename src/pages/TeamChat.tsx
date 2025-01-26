@@ -1,6 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
-import { collection, query, where, orderBy, onSnapshot, addDoc, getDocs } from 'firebase/firestore';
+import { 
+  collection, 
+  query, 
+  where, 
+  orderBy, 
+  onSnapshot, 
+  addDoc, 
+  getDocs,
+  doc,
+  getDoc 
+} from 'firebase/firestore';
 import { useAuth } from '@/context/AuthContext';
 import { db } from '@/lib/firebase';
 import { Button } from '@/components/ui/Button';
@@ -21,7 +31,6 @@ function TeamChat() {
 
   useEffect(() => {
     if (!teamId) return;
-
     const fetchTeam = async () => {
       const teamRef = collection(db, 'teams');
       const teamQuery = query(teamRef, where('__name__', '==', teamId));
@@ -29,22 +38,23 @@ function TeamChat() {
       if (!teamSnapshot.empty) {
         const teamData = { id: teamSnapshot.docs[0].id, ...teamSnapshot.docs[0].data() } as Team;
         setTeam(teamData);
-
-        const usersRef = collection(db, 'users');
-        const membersQuery = query(usersRef, where('uid', 'in', teamData.members || []));
-        const membersSnapshot = await getDocs(membersQuery);
-        const membersData = membersSnapshot.docs.map(doc => ({
-          uid: doc.id,
-          displayName: '',
-          photoURL: '',
-          experience: '',
-          ...doc.data(),
-        })) as unknown as User[];
+    
+        // Fetch members using document IDs directly
+        const membersData = await Promise.all(
+          (teamData.members || []).map(async (memberId) => {
+            const memberDocRef = doc(db, 'users', memberId);
+            const memberDocSnap = await getDoc(memberDocRef);
+            return {
+              uid: memberDocSnap.id,
+              ...memberDocSnap.data(),
+              displayName: memberDocSnap.data()?.displayName || 'Anonymous'
+            } as User;
+          })
+        );
         
         setMembers(membersData);
       }
     };
-
     fetchTeam();
 
     const messagesRef = collection(db, 'teams', teamId, 'messages');
