@@ -38,9 +38,7 @@ Hackathon Team Builder is a web application designed to help college students fo
 ### **Database**
 - Firebase Firestore for real-time data management.
 - Firestore security rules for secure access control.
-
-### **Hosting**
-- Firebase Hosting for fast and reliable deployment.
+- 
 
 ### **AI Recommendations (Optional)**
 - AI-powered teammate matching based on skills and availability.
