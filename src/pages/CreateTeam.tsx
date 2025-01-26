@@ -1,10 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, query, where, getDocs, addDoc } from 'firebase/firestore';
+import { 
+  collection, 
+  query, 
+  where, 
+  getDocs, 
+  addDoc 
+} from 'firebase/firestore';
 import { useAuth } from '@/context/AuthContext';
 import { db } from '@/lib/firebase';
 import { Button } from '@/components/ui/Button';
-import { User} from '@/types';
+import { User, TeamRequest } from '@/types';
 import { Users, Plus, X, Check, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -18,49 +24,61 @@ export default function CreateTeam() {
   const [teamDescription, setTeamDescription] = useState('');
   const [creating, setCreating] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+
   useEffect(() => {
     if (!user) return;
 
     const fetchConnections = async () => {
+      if (!user) return;
+      
       try {
-        setLoading(true);
-        // Get all accepted requests
         const requestsRef = collection(db, 'teamRequests');
-        const [sentRequests, receivedRequests] = await Promise.all([
-          getDocs(query(requestsRef, where('senderId', '==', user.uid), where('status', '==', 'accepted'))),
-          getDocs(query(requestsRef, where('receiverId', '==', user.uid), where('status', '==', 'accepted')))
-        ]);
-
-        // Get unique user IDs from requests
-        const connectedUserIds = new Set<string>();
-        sentRequests.docs.forEach(doc => connectedUserIds.add(doc.data().receiverId));
-        receivedRequests.docs.forEach(doc => connectedUserIds.add(doc.data().senderId));
-
-        if (connectedUserIds.size === 0) {
+        const acceptedRequestsQuery = query(
+          requestsRef,
+          or(
+            where('senderId', '==', user.uid),
+            where('receiverId', '==', user.uid)
+          ),
+          where('status', '==', 'accepted')
+        );
+    
+        const acceptedRequestsSnapshot = await getDocs(acceptedRequestsQuery);
+        const connectedUserIds = new Set();
+    
+        acceptedRequestsSnapshot.docs.forEach(doc => {
+          const request = doc.data() as TeamRequest;
+          const connectedUserId = request.senderId === user.uid
+            ? request.receiverId
+            : request.senderId;
+          connectedUserIds.add(connectedUserId);
+        });
+    
+        // Fetch detailed user information for connected users
+        if (connectedUserIds.size > 0) {
+          const usersRef = collection(db, 'users');
+          const connectedUsersQuery = query(
+            usersRef,
+            where('uid', 'in', Array.from(connectedUserIds))
+          );
+    
+          const connectedUsersSnapshot = await getDocs(connectedUsersQuery);
+          const connectedUsers = connectedUsersSnapshot.docs.map(doc => ({
+            uid: doc.id,
+            ...doc.data()
+          } as User));
+    
+          setConnections(connectedUsers);
+        } else {
           setConnections([]);
-          setLoading(false);
-          return;
         }
-
-        // Fetch user details for all connections
-        const usersRef = collection(db, 'users');
-        const usersSnapshot = await getDocs(query(usersRef, where('uid', 'in', Array.from(connectedUserIds))));
-        const connectionsData = usersSnapshot.docs.map(doc => ({
-          uid: doc.id,
-          ...doc.data()
-        } as User));
-
-        setConnections(connectionsData);
       } catch (error) {
         console.error('Error fetching connections:', error);
+        setConnections([]);
       } finally {
         setLoading(false);
       }
-      
     };
 
-    
-    
     fetchConnections();
   }, [user]);
 

@@ -35,14 +35,16 @@ export interface Message {
 export interface TeamRequest {
   id: string;
   senderId: string;
-  senderName: string;
+  senderName?: string;
   senderPhoto?: string;
   receiverId: string;
-  status: RequestStatus;
+  receiverName?: string;
+  status: 'pending' | 'accepted' | 'rejected';
   message?: string;
-  createdAt: string;
+  createdAt: any;
+  acceptedAt?: any;
+  rejectedAt?: any;
 }
-
 export type RequestStatus = 'pending' | 'accepted' | 'rejected';
 
 export interface Skill {
