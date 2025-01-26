@@ -10,6 +10,7 @@ import CreateTeam from './pages/CreateTeam';
 import TeamChat from './pages/TeamChat';
 import Login from './pages/Login';
 import PrivateRoute from './components/PrivateRoute';
+import JoinTeamPage from './pages/JoinTeamPage';
 
 function App() {
   return (
@@ -61,6 +62,15 @@ function App() {
                   </PrivateRoute>
                 }
               />
+              {/* Add JoinTeamPage route inside Routes */}
+              <Route 
+                path="/join-team/:inviteId" 
+                element={
+                  <PrivateRoute>
+                    <JoinTeamPage />
+                  </PrivateRoute>
+                } 
+              />
             </Routes>
           </main>
           <Toaster position="top-right" />
@@ -69,5 +79,4 @@ function App() {
     </AuthProvider>
   );
 }
-
 export default App;
