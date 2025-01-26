@@ -4,7 +4,8 @@ import { signInWithPopup } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, googleProvider, db } from '@/lib/firebase';
 import { Button } from '@/components/ui/Button';
-import { LogIn } from 'lucide-react';
+import { Chrome } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 export default function Login() {
   const [error, setError] = useState('');
@@ -41,34 +42,80 @@ export default function Login() {
   };
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
-      <div className="w-full max-w-md space-y-8 rounded-xl bg-white p-8 shadow-lg">
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+      className="flex min-h-[calc(100vh-4rem)] items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100"
+    >
+      <motion.div 
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.4 }}
+        className="w-full max-w-md space-y-8 rounded-2xl bg-white p-8 shadow-2xl border border-gray-100"
+      >
         <div className="text-center">
-          <h2 className="text-3xl font-bold tracking-tight">Welcome to TeamUp</h2>
-          <p className="mt-2 text-gray-600">
+          <motion.h2 
+            initial={{ y: -20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="text-4xl font-bold tracking-tight text-blue-900"
+          >
+            TeamUp
+          </motion.h2>
+          <motion.p 
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="mt-3 text-gray-600"
+          >
             Find your perfect hackathon team today
-          </p>
+          </motion.p>
         </div>
 
-        <div className="space-y-4">
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.4 }}
+          className="space-y-4"
+        >
           <Button
             onClick={handleGoogleSignIn}
-            className="w-full"
+            className="w-full group"
             size="lg"
+            variant="outline"
           >
-            <LogIn className="mr-2 h-5 w-5" />
+            <Chrome className="mr-3 h-5 w-5 text-red-500 group-hover:scale-110 transition-transform" />
             Continue with Google
           </Button>
 
           {error && (
-            <p className="text-center text-sm text-red-600">{error}</p>
+            <motion.p 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="text-center text-sm text-red-600 bg-red-50 p-2 rounded-lg"
+            >
+              {error}
+            </motion.p>
           )}
-        </div>
+        </motion.div>
 
-        <div className="mt-8 text-center text-sm text-gray-500">
-          By signing in, you agree to our Terms of Service and Privacy Policy
-        </div>
-      </div>
-    </div>
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="mt-8 text-center text-sm text-gray-500"
+        >
+          By signing in, you agree to our{' '}
+          <a href="#" className="text-blue-600 hover:underline">
+            Terms of Service
+          </a>{' '}
+          and{' '}
+          <a href="#" className="text-blue-600 hover:underline">
+            Privacy Policy
+          </a>
+        </motion.div>
+      </motion.div>
+    </motion.div>
   );
 }
