@@ -4,6 +4,7 @@ import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import Profile from './pages/Profile';
 import Teams from './pages/Teams';
+import TeamList from './pages/TeamList';
 import CreateTeam from './pages/CreateTeam';
 import TeamChat from './pages/TeamChat';
 import Login from './pages/Login';
@@ -20,14 +21,6 @@ function App() {
               <Route path="/login" element={<Login />} />
               <Route path="/" element={<Home />} />
               <Route
-  path="/team/:teamId"
-  element={
-    <PrivateRoute>
-      <TeamChat />
-    </PrivateRoute>
-  }
-/>
-              <Route
                 path="/profile"
                 element={
                   <PrivateRoute>
@@ -40,6 +33,14 @@ function App() {
                 element={
                   <PrivateRoute>
                     <Teams />
+                  </PrivateRoute>
+                }
+              />
+              <Route
+                path="/team-chat"
+                element={
+                  <PrivateRoute>
+                    <TeamList />
                   </PrivateRoute>
                 }
               />
