@@ -33,6 +33,7 @@ export interface Message {
 }
 
 export interface TeamRequest {
+  receiverPhoto: any;
   id: string;
   senderId: string;
   senderName?: string;
