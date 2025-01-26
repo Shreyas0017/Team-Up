@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { 
@@ -12,7 +12,9 @@ import {
   getDocs,
   doc,
   getDoc,
-  setDoc 
+  setDoc,
+  updateDoc,
+  arrayUnion
 } from 'firebase/firestore';
 import { useAuth } from '@/context/AuthContext';
 import { db } from '@/lib/firebase';
@@ -24,6 +26,7 @@ import { formatDistance } from 'date-fns';
 function TeamChat() {
   const { teamId } = useParams();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [team, setTeam] = useState<Team | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [members, setMembers] = useState<User[]>([]);
@@ -35,22 +38,21 @@ function TeamChat() {
   const [copyLinkStatus, setCopyLinkStatus] = useState<'copy' | 'copied'>('copy');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Function to generate invite link
+  // Generate Invite Link
   const generateInviteLink = async () => {
     if (!teamId || !user) return;
 
     try {
-      // Create an invite document in a separate 'team-invites' collection
       const inviteRef = doc(collection(db, 'team-invites'));
       await setDoc(inviteRef, {
         teamId: teamId,
         createdBy: user.uid,
         createdAt: new Date().toISOString(),
-        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days expiry
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+        status: 'active'
       });
 
-      // Construct invite link with proper routing
-      const link = `/join-team/${inviteRef.id}`;
+      const link = `${window.location.origin}/join-team/${inviteRef.id}`;
       setInviteLink(link);
       setShowInviteLink(true);
       toast.success('Invite link generated successfully!');
@@ -60,18 +62,14 @@ function TeamChat() {
     }
   };
 
-  // Function to copy invite link
+  // Copy Invite Link
   const copyInviteLink = () => {
     if (!inviteLink) return;
 
-    // Use full URL for copying
-    const fullLink = `${window.location.origin}${inviteLink}`;
-
-    navigator.clipboard.writeText(fullLink).then(() => {
+    navigator.clipboard.writeText(inviteLink).then(() => {
       setCopyLinkStatus('copied');
       toast.success('Invite link copied to clipboard');
       
-      // Reset copy status after 2 seconds
       setTimeout(() => {
         setCopyLinkStatus('copy');
       }, 2000);
@@ -81,10 +79,57 @@ function TeamChat() {
     });
   };
 
-  // Close invite link section
+  // Close Invite Link Section
   const closeInviteLink = () => {
     setShowInviteLink(false);
     setInviteLink('');
+  };
+
+  // Handle Team Join
+  const handleJoinTeam = async (inviteId: string) => {
+    if (!user) {
+      toast.error('You must be logged in to join a team');
+      navigate('/login');
+      return;
+    }
+
+    try {
+      const inviteDocRef = doc(db, 'team-invites', inviteId);
+      const inviteDoc = await getDoc(inviteDocRef);
+
+      if (!inviteDoc.exists()) {
+        toast.error('Invalid invite link');
+        return;
+      }
+
+      const inviteData = inviteDoc.data();
+      
+      if (
+        inviteData.status !== 'active' || 
+        new Date(inviteData.expiresAt) < new Date()
+      ) {
+        toast.error('Invite link has expired');
+        return;
+      }
+
+      const teamDocRef = doc(db, 'teams', inviteData.teamId);
+      
+      await updateDoc(teamDocRef, {
+        members: arrayUnion(user.uid)
+      });
+
+      await updateDoc(inviteDocRef, {
+        status: 'used',
+        usedBy: user.uid,
+        usedAt: new Date().toISOString()
+      });
+
+      toast.success('Successfully joined the team!');
+      navigate(`/team/${inviteData.teamId}`);
+    } catch (error) {
+      console.error('Error joining team:', error);
+      toast.error('Failed to join team');
+    }
   };
 
   useEffect(() => {
