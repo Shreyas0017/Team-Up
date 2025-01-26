@@ -1,4 +1,5 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
@@ -62,6 +63,7 @@ function App() {
               />
             </Routes>
           </main>
+          <Toaster position="top-right" />
         </div>
       </Router>
     </AuthProvider>

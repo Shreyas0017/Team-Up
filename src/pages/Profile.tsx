@@ -5,14 +5,15 @@ import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { useAuth } from '@/context/AuthContext';
 import { db } from '@/lib/firebase';
 import { Button } from '@/components/ui/Button';
-import { collection, query, where, getDocs } from 'firebase/firestore';
-import { Users, MessageCircle } from 'lucide-react';
+import { collection, query, where, getDocs, deleteDoc, arrayRemove } from 'firebase/firestore';
+import { Users, MessageCircle,LogOut } from 'lucide-react';
 import { User, Skill, SkillLevel, SkillCategory, ExperienceLevel } from '@/types';
 import { 
   Code, Palette, Phone, Database, Layout, Briefcase, LineChart, 
   Trash2, PlusCircle, Check, X 
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import toast from 'react-hot-toast';
 
 const skillCategories: { id: SkillCategory; label: string; icon: React.ReactNode }[] = [
   { id: 'frontend', label: 'Frontend', icon: <Layout className="h-5 w-5 text-blue-500" /> },
@@ -41,6 +42,8 @@ export default function Profile() {
   });
 
   useEffect(() => {
+
+      
   
       const fetchUserTeams = async () => {
         if (!user) return;
@@ -131,7 +134,48 @@ export default function Profile() {
       </div>
     );
   }
-
+  
+  const handleLeaveTeam = async (teamId: string) => {
+    if (!user) return;
+  
+    try {
+      const teamRef = doc(db, 'teams', teamId);
+      
+      await updateDoc(teamRef, {
+        members: arrayRemove(user.uid)
+      });
+  
+      setUserTeams(prev => prev.filter(team => team.id !== teamId));
+  
+      toast.success('Successfully left the team');
+    } catch (error) {
+      console.error('Error leaving team:', error);
+      toast.error('Failed to leave team');
+    }
+  };
+  
+  const handleDeleteTeam = async (teamId: string) => {
+    if (!user) return;
+  
+    try {
+      const teamRef = doc(db, 'teams', teamId);
+      const teamDoc = await getDoc(teamRef);
+      
+      if (teamDoc.exists() && teamDoc.data().createdBy === user.uid) {
+        await deleteDoc(teamRef);
+        
+        setUserTeams(prev => prev.filter(team => team.id !== teamId));
+  
+        toast.success('Team deleted successfully');
+      } else {
+        toast.error('You do not have permission to delete this team');
+      }
+    } catch (error) {
+      console.error('Error deleting team:', error);
+      toast.error('Failed to delete team');
+    }
+  };
+  
   return (
     <div className="max-w-4xl mx-auto space-y-8 p-6 bg-gray-50 min-h-screen">
       <div className="bg-white rounded-2xl shadow-xl p-8 border border-gray-100">
@@ -268,51 +312,6 @@ export default function Profile() {
             </div>
           </div>
         </section>
-        {/* Teams Section */}
-<div className="bg-white rounded-lg shadow-md p-6">
-  <h2 className="text-xl font-bold mb-4">Your Teams</h2>
-  {userTeams.length === 0 ? (
-    <div className="text-center py-8">
-      <Users className="mx-auto h-12 w-12 text-gray-400" />
-      <h3 className="mt-2 text-sm font-medium text-gray-900">No teams yet</h3>
-      <p className="mt-1 text-sm text-gray-500">
-        Join or create a team to get started
-      </p>
-    </div>
-  ) : (
-    <div className="space-y-4">
-      {userTeams.map(team => (
-        <div
-          key={team.id}
-          className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
-        >
-          <div>
-            <h3 className="font-medium">{team.name}</h3>
-            {team.description && (
-              <p className="text-sm text-gray-500">{team.description}</p>
-            )}
-          </div>
-          <div className="flex items-center space-x-2">
-            {team.createdBy === user?.uid && (
-              <span className="text-sm text-blue-600 bg-blue-50 px-2 py-1 rounded">
-                Team Leader
-              </span>
-            )}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate(`/team/${team.id}`)}
-            >
-              <MessageCircle className="mr-2 h-4 w-4" />
-              Open Chat
-            </Button>
-          </div>
-        </div>
-      ))}
-    </div>
-  )}
-</div>
-
 
         {/* Social Links */}
         <section>
@@ -358,6 +357,65 @@ export default function Profile() {
             </div>
           </div>
         </section>
+
+{/* Teams Section */}
+<div className="bg-white rounded-lg shadow-md p-6">
+  <h2 className="text-xl font-bold mb-4">Your Teams</h2>
+  {userTeams.length === 0 ? (
+    <div className="text-center py-8">
+      <Users className="mx-auto h-12 w-12 text-gray-400" />
+      <h3 className="mt-2 text-sm font-medium text-gray-900">No teams yet</h3>
+      <p className="mt-1 text-sm text-gray-500">
+        Join or create a team to get started
+      </p>
+    </div>
+  ) : (
+    <div className="space-y-4">
+      {userTeams.map(team => (
+        <div
+          key={team.id}
+          className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
+        >
+          <div>
+            <h3 className="font-medium">{team.name}</h3>
+            {team.description && (
+              <p className="text-sm text-gray-500">{team.description}</p>
+            )}
+          </div>
+          <div className="flex items-center space-x-2">
+            {team.createdBy === user?.uid ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleDeleteTeam(team.id)}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete Team
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleLeaveTeam(team.id)}
+              >
+                <LogOut className="mr-2 h-4 w-4" />
+                Leave Team
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate(`/team/${team.id}`)}
+            >
+              <MessageCircle className="mr-2 h-4 w-4" />
+              Open Chat
+            </Button>
+          </div>
+        </div>
+      ))}
+    </div>
+  )}
+</div>
       </div>
     </div>
   );

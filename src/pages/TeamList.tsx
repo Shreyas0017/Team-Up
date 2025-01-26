@@ -1,16 +1,25 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { useAuth } from '@/context/AuthContext';
 import { db } from '@/lib/firebase';
 import { Button } from '@/components/ui/Button';
 import { Team } from '@/types';
-import { Users, MessageCircle } from 'lucide-react';
+import { Users, MessageCircle, LogOut, Trash2, X } from 'lucide-react';
 
 export default function TeamList() {
   const { user } = useAuth();
   const [teams, setTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
+  const [leavingTeam, setLeavingTeam] = useState<string | null>(null);
+  const [deletingTeam, setDeletingTeam] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [confirmationTeam, setConfirmationTeam] = useState<string | null>(null);
+
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   useEffect(() => {
     const fetchTeams = async () => {
@@ -29,6 +38,7 @@ export default function TeamList() {
         } as Team));
         setTeams(teamsData);
       } catch (error) {
+        showToast('Failed to load teams', 'error');
         console.error('Error fetching teams:', error);
       } finally {
         setLoading(false);
@@ -38,12 +48,116 @@ export default function TeamList() {
     fetchTeams();
   }, [user]);
 
+  const handleLeaveTeam = async (teamId: string) => {
+    if (!user || !window.confirm('Are you sure you want to leave this team?')) return;
+
+    setLeavingTeam(teamId);
+    try {
+      const teamRef = doc(db, 'teams', teamId);
+      const team = teams.find(t => t.id === teamId);
+
+      if (team) {
+        const updatedMembers = team.members.filter(memberId => memberId !== user.uid);
+        await updateDoc(teamRef, {
+          members: updatedMembers
+        });
+
+        setTeams(prev => prev.filter(t => t.id !== teamId));
+
+        showToast(`You have left the team: ${team.name}`);
+      }
+    } catch (error) {
+      showToast('Failed to leave team', 'error');
+      console.error('Error leaving team:', error);
+    } finally {
+      setLeavingTeam(null);
+    }
+  };
+
+  const handleDeleteTeam = async (teamId: string) => {
+    setConfirmationTeam(teamId);
+  };
+
+  const deleteTeam = async () => {
+    if (!confirmationTeam) return;
+
+    setDeletingTeam(confirmationTeam);
+    try {
+      const teamRef = doc(db, 'teams', confirmationTeam);
+      const team = teams.find(t => t.id === confirmationTeam);
+
+      if (team && team.createdBy === user?.uid) {
+        await deleteDoc(teamRef);
+        setTeams(prev => prev.filter(t => t.id !== confirmationTeam));
+        showToast(`Team ${team.name} has been deleted`);
+      }
+    } catch (error) {
+      showToast('Failed to delete team', 'error');
+      console.error('Error deleting team:', error);
+    } finally {
+      setDeletingTeam(null);
+      setConfirmationTeam(null);
+    }
+  };
+
   if (loading) {
     return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
   }
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
+      {/* Toast Notification */}
+      {toast && (
+        <div 
+          className={`fixed top-4 right-4 z-50 px-4 py-2 rounded-md ${
+            toast.type === 'error' 
+              ? 'bg-red-500 text-white' 
+              : 'bg-green-500 text-white'
+          }`}
+        >
+          {toast.message}
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {confirmationTeam && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full relative">
+            <button 
+              onClick={() => setConfirmationTeam(null)} 
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+            >
+              <X className="h-6 w-6" />
+            </button>
+            <div className="text-center">
+              <Trash2 className="mx-auto h-12 w-12 text-red-600 mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Delete Team Permanently
+              </h3>
+              <p className="text-sm text-gray-500 mb-6">
+                This will permanently delete the team and remove all members. 
+                You cannot undo this action.
+              </p>
+              <div className="flex justify-center space-x-4">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setConfirmationTeam(null)}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  variant="outline"
+                  onClick={deleteTeam}
+                  disabled={deletingTeam === confirmationTeam}
+                >
+                  {deletingTeam === confirmationTeam ? 'Deleting...' : 'Confirm Delete'}
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="bg-white rounded-lg shadow-md p-6">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Your Teams</h1>
@@ -75,13 +189,49 @@ export default function TeamList() {
                   {team.description && (
                     <p className="text-sm text-gray-500">{team.description}</p>
                   )}
+                  <div className="mt-1">
+                    <span className="text-sm text-gray-500">
+                      {team.members.length} members
+                    </span>
+                    {team.createdBy === user?.uid && (
+                      <span className="ml-2 text-sm text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
+                        Team Leader
+                      </span>
+                    )}
+                  </div>
                 </div>
-                <Link to={`/team/${team.id}`}>
-                  <Button variant="outline" size="sm">
-                    <MessageCircle className="mr-2 h-4 w-4" />
-                    Open Chat
-                  </Button>
-                </Link>
+                <div className="flex items-center space-x-2">
+                  <Link to={`/team/${team.id}`}>
+                    <Button variant="outline" size="sm">
+                      <MessageCircle className="mr-2 h-4 w-4" />
+                      Chat
+                    </Button>
+                  </Link>
+                  {team.createdBy !== user?.uid && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleLeaveTeam(team.id)}
+                      disabled={leavingTeam === team.id}
+                      className="text-red-600 hover:bg-red-50"
+                    >
+                      <LogOut className="mr-2 h-4 w-4" />
+                      {leavingTeam === team.id ? 'Leaving...' : 'Leave'}
+                    </Button>
+                  )}
+                  {team.createdBy === user?.uid && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDeleteTeam(team.id)}
+                      disabled={deletingTeam === team.id}
+                      className="text-red-600 hover:bg-red-50"
+                    >
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      {deletingTeam === team.id ? 'Deleting...' : 'Delete'}
+                    </Button>
+                  )}
+                </div>
               </div>
             ))}
           </div>
