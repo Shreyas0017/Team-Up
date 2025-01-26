@@ -18,7 +18,7 @@ import { Button } from '@/components/ui/Button';
 import { User, SkillCategory, TeamRequest } from '@/types';
 import { 
   Users, Search, Filter, Code, Palette, Phone, Database, 
-  Layout, Briefcase, LineChart 
+  Layout, Briefcase, LineChart , X
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -41,6 +41,7 @@ export default function Teams() {
   const [selectedExperience, setSelectedExperience] = useState<string[]>([]);
   const [connectingTo, setConnectingTo] = useState<string | null>(null);
   const [requests, setRequests] = useState<TeamRequest[]>([]);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -300,15 +301,15 @@ export default function Teams() {
             </div>
           </div>
         </div>
-
        
       {/* User Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredUsers.map(targetUser => (
-          <div 
-            key={targetUser.uid} 
-            className="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow"
-          >
+  {filteredUsers.map(targetUser => (
+    <div 
+      key={targetUser.uid} 
+      className="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow"
+      onClick={() => setSelectedUser(targetUser)} // Add this line
+    >
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center">
                 {targetUser.photoURL ? (
@@ -380,121 +381,119 @@ export default function Teams() {
         ))}
       </div>
 
-      {/* Received Connection Requests */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-        <h3 className="text-xl font-semibold text-gray-700 mb-6">
-          Received Connection Requests
-        </h3>
-        {requests.filter(req => 
-          req.receiverId === user?.uid && 
-          req.status === 'pending'
-        ).length > 0 ? (
-          requests
-            .filter(req => req.receiverId === user?.uid && req.status === 'pending')
-            .map((req) => (
-              <div 
-                key={req.id} 
-                className="flex justify-between items-center mb-4 p-3 bg-gray-50 rounded-lg"
-              >
-                <div className="flex items-center">
-                  {req.senderPhoto ? (
-                    <img 
-                      src={req.senderPhoto} 
-                      alt={req.senderName} 
-                      className="w-10 h-10 rounded-full mr-3 object-cover" 
-                    />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center mr-3">
-                      <Users className="h-5 w-5 text-gray-500" />
+
+        {/* Profile Modal */}
+        {selectedUser && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <div className="p-6">
+                <div className="flex items-start justify-between mb-6">
+                  <div className="flex items-center">
+                    {selectedUser.photoURL ? (
+                      <img
+                        src={selectedUser.photoURL}
+                        alt={selectedUser.displayName}
+                        className="w-16 h-16 rounded-full"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center">
+                        <Users className="h-8 w-8 text-gray-400" />
+                      </div>
+                    )}
+                    <div className="ml-4">
+                      <h2 className="text-2xl font-bold">{selectedUser.displayName}</h2>
+                      <p className="text-gray-500 capitalize">{selectedUser.experience} Developer</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setSelectedUser(null)}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                </div>
+
+                <div className="space-y-6">
+                  {selectedUser.bio && (
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">About</h3>
+                      <p className="text-gray-600">{selectedUser.bio}</p>
                     </div>
                   )}
+
                   <div>
-                    <span className="font-semibold text-gray-700 block">
-                      {req.senderName}
-                    </span>
-                    <span className="text-sm text-gray-500">
-                      Wants to connect
-                    </span>
+                    <h3 className="text-lg font-semibold mb-2">Skills</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedUser.skills?.map((skill, index) => (
+                        <span
+                          key={index}
+                          className="inline-flex items-center px-3 py-1 rounded-full bg-gray-100 text-gray-800"
+                        >
+                          {skillCategories.find(cat => cat.id === skill.category)?.icon}
+                          <span className="ml-2">{skill.name}</span>
+                          <span className="ml-1 text-gray-500">• {skill.level}</span>
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                </div>
 
-                <div className="flex gap-4">
-                  <Button
-                    onClick={() => handleAcceptRequest(req)}
-                    className="bg-green-600 text-white hover:bg-green-700"
-                  >
-                    Accept
-                  </Button>
-                  <Button
-                    onClick={() => handleRejectRequest(req)}
-                    className="bg-red-600 text-white hover:bg-red-700"
-                  >
-                    Decline
-                  </Button>
-                </div>
-              </div>
-            ))
-        ) : (
-          <div className="text-center py-6">
-            <Users className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-            <p className="text-gray-500">No pending connection requests</p>
-          </div>
-        )}
-      </div>
-
-      {/* Sent Connection Requests */}
-      <div className="bg-white rounded-lg shadow-md p-6 mb-8">
-        <h3 className="text-xl font-semibold text-gray-700 mb-6">
-          Sent Connection Requests
-        </h3>
-        {requests.filter(req => 
-          req.senderId === user?.uid && 
-          req.status === 'pending'
-        ).length > 0 ? (
-          requests
-            .filter(req => req.senderId === user?.uid && req.status === 'pending')
-            .map((req) => (
-              <div 
-                key={req.id} 
-                className="flex justify-between items-center mb-4 p-3 bg-gray-50 rounded-lg"
-              >
-                <div className="flex items-center">
-                  {req.receiverPhoto ? (
-                    <img 
-                      src={req.receiverPhoto} 
-                      alt={req.receiverName} 
-                      className="w-10 h-10 rounded-full mr-3 object-cover" 
-                    />
-                  ) : (
-                    <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center mr-3">
-                      <Users className="h-5 w-5 text-gray-500" />
+                  {(selectedUser.githubUrl || selectedUser.linkedinUrl || selectedUser.portfolioUrl) && (
+                    <div>
+                      <h3 className="text-lg font-semibold mb-2">Links</h3>
+                      <div className="space-y-2">
+                        {selectedUser.githubUrl && (
+                          <a
+                            href={selectedUser.githubUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline block"
+                          >
+                            GitHub Profile
+                          </a>
+                        )}
+                        {selectedUser.linkedinUrl && (
+                          <a
+                            href={selectedUser.linkedinUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline block"
+                          >
+                            LinkedIn Profile
+                          </a>
+                        )}
+                        {selectedUser.portfolioUrl && (
+                          <a
+                            href={selectedUser.portfolioUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:underline block"
+                          >
+                            Portfolio Website
+                          </a>
+                        )}
+                      </div>
                     </div>
                   )}
-                  <div>
-                    <span className="font-semibold text-gray-700 block">
-                      {req.receiverName}
-                    </span>
-                    <span className="text-sm text-gray-500">
-                      Request Pending
-                    </span>
-                  </div>
                 </div>
 
-                <Button
-                  onClick={() => handleRemoveConnection(req)}
-                  className="bg-gray-600 text-white hover:bg-gray-700"
-                >
-                  Cancel Request
-                </Button>
+                <div className="mt-6 flex justify-end">
+  {getRequestStatus(selectedUser) !== 'accepted' && (
+    <Button
+      onClick={(e) => {
+        e.stopPropagation();
+        handleConnect(selectedUser);
+        setSelectedUser(null);
+      }}
+      disabled={connectingTo === selectedUser.uid}
+    >
+      {connectingTo === selectedUser.uid ? 'Sending Request...' : 'Send Connection Request'}
+    </Button>
+  )}
+</div>
               </div>
-            ))
-        ) : (
-          <div className="text-center py-6">
-            <Users className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-            <p className="text-gray-500">No sent connection requests</p>
+            </div>
           </div>
         )}
-      </div>
     </div>
   </div>
 );
