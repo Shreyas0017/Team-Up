@@ -71,3 +71,16 @@ export interface TimeSlot {
   start: string;
   end: string;
 }
+
+export interface ConnectionRequest {
+  id?: string;
+  senderId: string;
+  receiverId: string;
+  senderName?: string;
+  senderPhoto?: string;
+  receiverName?: string;
+  receiverPhoto?: string;
+  status: 'pending' | 'accepted' | 'rejected';
+  message?: string;
+  createdAt: string;
+}
