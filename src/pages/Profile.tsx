@@ -208,169 +208,172 @@ export default function Profile() {
       );
     };
   return (
-    <div className="mt-20">
-    <div className="max-w-5xl mx-auto space-y-8 p-6 bg-gradient-to-br from-gray-50 to-blue-50 min-h-screen">
-      <div className="bg-white rounded-3xl shadow-2xl p-8 border border-gray-100 transform transition-all hover:scale-[1.01]">
-        <div className="flex items-center justify-between mb-8 animate-fade-in">
-          <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
-            Profile Settings
-          </h1>
-          <div className="flex space-x-2">
-            <Button 
-              variant="outline" 
-              onClick={() => navigate(-1)}
-              className="hover:bg-gray-100 transition-colors group"
-            >
-              <X className="mr-2 h-4 w-4 group-hover:rotate-180 transition-transform" /> Cancel
-            </Button>
-            <Button 
-              onClick={handleSave} 
-              disabled={saving}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all text-white"
-            >
-              {saving ? 'Saving...' : <><Check className="mr-2 h-4 w-4" /> Save Changes</>}
-            </Button>
-          </div>
-        </div>
-        {/* Basic Information */}
-        <section className="mb-12">
-          <div 
-            className="flex items-center justify-between cursor-pointer"
-            onClick={() => toggleSection('basicInfo')}
-          >
-            <h2 className="text-xl font-semibold text-gray-700 mb-4 border-b pb-2">
-              Basic Information
-            </h2>
-            {expandedSections.basicInfo ? <ChevronUp /> : <ChevronDown />}
-          </div>
-          
-          {expandedSections.basicInfo && (
-            <div className="grid md:grid-cols-2 gap-6 animate-slide-down">
-              <div className="relative group">
-                <label className="block text-sm font-medium text-gray-600 mb-2">Bio</label>
-                <textarea
-                  className="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-                  rows={4}
-                  value={profile.bio || ''}
-                  onChange={e => setProfile(prev => ({ ...prev, bio: e.target.value }))}
-                  placeholder="Tell us about your journey, interests, and goals..."
-                />
-                <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <Edit className="h-4 w-4 text-gray-500" />
-                </div>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-gray-600 mb-2">
-                  Experience Level
-                </label>
-                <div className="grid grid-cols-3 gap-2">
-                  {experienceLevels.map(level => (
-                    <button
-                      key={level}
-                      onClick={() => setProfile(prev => ({ ...prev, experience: level }))}
-                      className={cn(
-                        "py-2 rounded-lg transition-all text-sm flex items-center justify-center space-x-2 group",
-                        profile.experience === level 
-                          ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white" 
-                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                      )}
-                    >
-                      {level.charAt(0).toUpperCase() + level.slice(1)}
-                      {profile.experience === level && <Star className="h-4 w-4 animate-pulse" />}
-                    </button>
-                  ))}
-                </div>
-              </div>
+    <div className="mt-16 sm:mt-20">
+      <div className="max-w-5xl mx-auto space-y-6 sm:space-y-8 p-4 sm:p-6 bg-gradient-to-br from-gray-50 to-blue-50 min-h-screen">
+        <div className="bg-white rounded-2xl sm:rounded-3xl shadow-xl sm:shadow-2xl p-4 sm:p-8 border border-gray-100 transform transition-all hover:scale-[1.01]">
+          {/* Header Section */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 sm:gap-8 mb-6 sm:mb-8 animate-fade-in">
+            <h1 className="text-2xl sm:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
+              Profile Settings
+            </h1>
+            <div className="flex flex-col sm:flex-row gap-2 sm:space-x-2 w-full sm:w-auto">
+              <Button 
+                variant="outline" 
+                onClick={() => navigate(-1)}
+                className="w-full sm:w-auto hover:bg-gray-100 transition-colors group"
+              >
+                <X className="mr-2 h-4 w-4 group-hover:rotate-180 transition-transform" /> Cancel
+              </Button>
+              <Button 
+                onClick={handleSave} 
+                disabled={saving}
+                className="w-full sm:w-auto bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all text-white"
+              >
+                {saving ? 'Saving...' : <><Check className="mr-2 h-4 w-4" /> Save Changes</>}
+              </Button>
             </div>
-          )}
-        </section>
+          </div>
+        {/* Basic Information */}
+        <section className="mb-8 sm:mb-12">
+            <div 
+              className="flex items-center justify-between cursor-pointer"
+              onClick={() => toggleSection('basicInfo')}
+            >
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-700 mb-4 border-b pb-2">
+                Basic Information
+              </h2>
+              {expandedSections.basicInfo ? <ChevronUp /> : <ChevronDown />}
+            </div>
+            
+            {expandedSections.basicInfo && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 animate-slide-down">
+                <div className="relative group">
+                  <label className="block text-sm font-medium text-gray-600 mb-2">Bio</label>
+                  <textarea
+                    className="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm sm:text-base"
+                    rows={4}
+                    value={profile.bio || ''}
+                    onChange={e => setProfile(prev => ({ ...prev, bio: e.target.value }))}
+                    placeholder="Tell us about your journey, interests, and goals..."
+                  />
+                  <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Edit className="h-4 w-4 text-gray-500" />
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-2">
+                    Experience Level
+                  </label>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    {experienceLevels.map(level => (
+                      <button
+                        key={level}
+                        onClick={() => setProfile(prev => ({ ...prev, experience: level }))}
+                        className={cn(
+                          "py-2 px-4 rounded-lg transition-all text-xs sm:text-sm flex items-center justify-center space-x-2 group",
+                          profile.experience === level 
+                            ? "bg-gradient-to-r from-blue-500 to-purple-500 text-white" 
+                            : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                        )}
+                      >
+                        {level.charAt(0).toUpperCase() + level.slice(1)}
+                        {profile.experience === level && <Star className="h-3 w-3 sm:h-4 sm:w-4 animate-pulse" />}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </section>
+
 
 
 {/* Skills Section */}
-<section className="mb-12">
-  <div 
-    className="flex items-center justify-between cursor-pointer"
-    onClick={() => toggleSection('skills')}
-  >
-    <h2 className="text-xl font-semibold text-gray-700 mb-4 border-b pb-2 flex items-center">
-      <Star className="mr-2 h-5 w-5 text-yellow-500" />
-      Skills
-    </h2>
-    {expandedSections.skills ? <ChevronUp className="text-gray-500" /> : <ChevronDown className="text-gray-500" />}
-  </div>
-
-  {expandedSections.skills && (
-    <div className="space-y-4 animate-slide-down">
-      <div className="flex space-x-2 mb-4">
-        <input
-          type="text"
-          className="flex-grow rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-gray-400"
-          placeholder="Enter a new skill (e.g., React, Python)"
-          value={newSkill.name}
-          onChange={e => setNewSkill(prev => ({ ...prev, name: e.target.value }))}
-        />
-        <select
-          className="rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-500 transition-all"
-          value={newSkill.category}
-          onChange={e => setNewSkill(prev => ({ ...prev, category: e.target.value as SkillCategory }))}
-        >
-          {skillCategories.map(category => (
-            <option key={category.id} value={category.id} className="flex items-center">
-              {category.label}
-            </option>
-          ))}
-        </select>
-        <select
-          className="rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-500 transition-all"
-          value={newSkill.level}
-          onChange={e => setNewSkill(prev => ({ ...prev, level: e.target.value as SkillLevel }))}
-        >
-          {skillLevels.map(level => (
-            <option key={level} value={level}>
-              {level.charAt(0).toUpperCase() + level.slice(1)}
-            </option>
-          ))}
-        </select>
-        <Button 
-          onClick={handleAddSkill}
-          disabled={!newSkill.name}
-          className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 transition-all text-white disabled:opacity-50"
-        >
-          <PlusCircle className="mr-2 h-4 w-4" /> Add
-        </Button>
-      </div>
-
-      <div className="grid gap-3">
-        {profile.skills?.map((skill, index) => (
-          <div
-            key={index}
-            className="flex items-center justify-between bg-gray-100 p-3 rounded-lg hover:bg-gray-200 transition-colors group"
-          >
-            <div className="flex items-center space-x-3">
-              {skillCategories.find(cat => cat.id === skill.category)?.icon}
-              <div className="flex items-center space-x-2">
-                <span className="font-medium text-gray-800">{skill.name}</span>
-                <span className="text-sm text-gray-500">
-                  {skill.category}
-                </span>
-                {renderSkillLevelIndicator(skill.level)}
-              </div>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => handleRemoveSkill(index)}
-              className="text-red-500 hover:text-red-600 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-all"
+          {/* Skills Section */}
+          <section className="mb-8 sm:mb-12">
+            <div 
+              className="flex items-center justify-between cursor-pointer"
+              onClick={() => toggleSection('skills')}
             >
-              <Trash2 className="h-4 w-4" />
-            </Button>
-          </div>
-        ))}
-      </div>
-    </div>
-  )}
-</section>
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-700 mb-4 border-b pb-2 flex items-center">
+                <Star className="mr-2 h-4 w-4 sm:h-5 sm:w-5 text-yellow-500" />
+                Skills
+              </h2>
+              {expandedSections.skills ? <ChevronUp className="text-gray-500" /> : <ChevronDown className="text-gray-500" />}
+            </div>
+
+            {expandedSections.skills && (
+              <div className="space-y-4 animate-slide-down">
+                <div className="flex flex-col sm:flex-row gap-2 sm:space-x-2 mb-4">
+                  <input
+                    type="text"
+                    className="flex-grow rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all placeholder-gray-400 text-sm sm:text-base"
+                    placeholder="Enter a new skill (e.g., React, Python)"
+                    value={newSkill.name}
+                    onChange={e => setNewSkill(prev => ({ ...prev, name: e.target.value }))}
+                  />
+                  <div className="flex gap-2">
+                    <select
+                      className="w-full sm:w-auto rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-500 transition-all text-sm sm:text-base"
+                      value={newSkill.category}
+                      onChange={e => setNewSkill(prev => ({ ...prev, category: e.target.value as SkillCategory }))}
+                    >
+                      {skillCategories.map(category => (
+                        <option key={category.id} value={category.id}>{category.label}</option>
+                      ))}
+                    </select>
+                    <select
+                      className="w-full sm:w-auto rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-500 transition-all text-sm sm:text-base"
+                      value={newSkill.level}
+                      onChange={e => setNewSkill(prev => ({ ...prev, level: e.target.value as SkillLevel }))}
+                    >
+                      {skillLevels.map(level => (
+                        <option key={level} value={level}>
+                          {level.charAt(0).toUpperCase() + level.slice(1)}
+                        </option>
+                      ))}
+                    </select>
+                    <Button 
+                      onClick={handleAddSkill}
+                      disabled={!newSkill.name}
+                      className="w-full sm:w-auto bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 transition-all text-white disabled:opacity-50"
+                    >
+                      <PlusCircle className="mr-2 h-4 w-4" /> Add
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="grid gap-3">
+                  {profile.skills?.map((skill, index) => (
+                    <div
+                      key={index}
+                      className="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-gray-100 p-3 rounded-lg hover:bg-gray-200 transition-colors group"
+                    >
+                      <div className="flex items-center space-x-3 mb-2 sm:mb-0">
+                        {skillCategories.find(cat => cat.id === skill.category)?.icon}
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:space-x-2">
+                          <span className="font-medium text-gray-800">{skill.name}</span>
+                          <span className="text-xs sm:text-sm text-gray-500">
+                            {skill.category}
+                          </span>
+                          {renderSkillLevelIndicator(skill.level)}
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleRemoveSkill(index)}
+                        className="text-red-500 hover:text-red-600 hover:bg-red-50 sm:opacity-0 group-hover:opacity-100 transition-all"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </section>
 
         {/* Social Links */}
         <section>
@@ -418,11 +421,11 @@ export default function Profile() {
         </section>
 
 {/* Teams Section */}
-<div className="bg-white rounded-lg shadow-md p-6">
-  <h2 className="text-xl font-bold mb-4">Your Teams</h2>
+<div className="bg-white rounded-lg shadow-md p-4 sm:p-6 w-full">
+  <h2 className="text-lg sm:text-xl font-bold mb-4">Your Teams</h2>
   {userTeams.length === 0 ? (
-    <div className="text-center py-8">
-      <Users className="mx-auto h-12 w-12 text-gray-400" />
+    <div className="text-center py-6 sm:py-8">
+      <Users className="mx-auto h-8 w-8 sm:h-12 sm:w-12 text-gray-400" />
       <h3 className="mt-2 text-sm font-medium text-gray-900">No teams yet</h3>
       <p className="mt-1 text-sm text-gray-500">
         Join or create a team to get started
@@ -430,45 +433,48 @@ export default function Profile() {
     </div>
   ) : (
     <div className="space-y-4">
-      {userTeams.map(team => (
-        <div
-          key={team.id}
-          className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
-        >
-          <div>
-            <h3 className="font-medium">{team.name}</h3>
-            {team.description && (
-              <p className="text-sm text-gray-500">{team.description}</p>
-            )}
-          </div>
-          <div className="flex items-center space-x-2">
-            {team.createdBy === user?.uid ? (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleDeleteTeam(team.id)}
-              >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete Team
-              </Button>
-            ) : (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleLeaveTeam(team.id)}
-              >
-                <LogOut className="mr-2 h-4 w-4" />
-                Leave Team
-              </Button>
-            )}
+    {userTeams.map(team => (
+      <div
+        key={team.id}
+        className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-gray-50 rounded-lg gap-4"
+      >
+        <div className="w-full sm:w-auto">
+          <h3 className="font-medium">{team.name}</h3>
+          {team.description && (
+            <p className="text-sm text-gray-500 mt-1">{team.description}</p>
+          )}
+        </div>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+          {team.createdBy === user?.uid ? (
             <Button
               variant="outline"
               size="sm"
-              onClick={() => navigate(`/team/${team.id}`)}
+              onClick={() => handleDeleteTeam(team.id)}
+              className="w-full sm:w-auto justify-center"
             >
-              <MessageCircle className="mr-2 h-4 w-4" />
-              Open Chat
+              <Trash2 className="mr-2 h-4 w-4" />
+              Delete Team
             </Button>
+          ) : (
+            <Button
+            variant="outline"
+            size="sm"
+            onClick={() => handleLeaveTeam(team.id)}
+            className="w-full sm:w-auto justify-center"
+          >
+            <LogOut className="mr-2 h-4 w-4" />
+            Leave Team
+          </Button>
+        )}
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => navigate(`/team/${team.id}`)}
+          className="w-full sm:w-auto justify-center"
+        >
+          <MessageCircle className="mr-2 h-4 w-4" />
+          Open Chat
+        </Button>
           </div>
         </div>
       ))}
