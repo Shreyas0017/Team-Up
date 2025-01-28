@@ -20,7 +20,7 @@ import { useAuth } from '@/context/AuthContext';
 import { db } from '@/lib/firebase';
 import { Button } from '@/components/ui/Button';
 import { Team, Message, User } from '@/types';
-import { Send, Users, Info, Clock, UserPlus, Zap, Copy, Check, X } from 'lucide-react';
+import { Send, Users, Info, Clock, UserPlus, Zap, Copy, Check, X, Menu } from 'lucide-react';
 import { formatDistance } from 'date-fns';
 
 function TeamChat() {
@@ -36,7 +36,10 @@ function TeamChat() {
   const [inviteLink, setInviteLink] = useState<string>('');
   const [showInviteLink, setShowInviteLink] = useState(false);
   const [copyLinkStatus, setCopyLinkStatus] = useState<'copy' | 'copied'>('copy');
+  const [showMobileMembers, setShowMobileMembers] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const chatContainerRef = useRef<HTMLDivElement>(null);
 
   // Generate Invite Link
   const generateInviteLink = async () => {
@@ -134,6 +137,7 @@ function TeamChat() {
 
   useEffect(() => {
     if (!teamId) return;
+
     const fetchTeam = async () => {
       const teamRef = collection(db, 'teams');
       const teamQuery = query(teamRef, where('__name__', '==', teamId));
@@ -142,7 +146,6 @@ function TeamChat() {
         const teamData = { id: teamSnapshot.docs[0].id, ...teamSnapshot.docs[0].data() } as Team;
         setTeam(teamData);
     
-        // Fetch members using document IDs directly
         const membersData = await Promise.all(
           (teamData.members || []).map(async (memberId) => {
             const memberDocRef = doc(db, 'users', memberId);
@@ -172,7 +175,43 @@ function TeamChat() {
       scrollToBottom();
     });
 
-    return () => unsubscribe();
+    // Add touch events for mobile
+    const chatContainer = chatContainerRef.current;
+    let touchStartY = 0;
+    let scrollTop = 0;
+
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartY = e.touches[0].clientY;
+      scrollTop = chatContainer?.scrollTop || 0;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (!chatContainer) return;
+      
+      const touchY = e.touches[0].clientY;
+      const diff = touchStartY - touchY;
+      chatContainer.scrollTop = scrollTop + diff;
+      
+      if (
+        (chatContainer.scrollTop === 0 && diff < 0) ||
+        (chatContainer.scrollHeight - chatContainer.scrollTop === chatContainer.clientHeight && diff > 0)
+      ) {
+        e.preventDefault();
+      }
+    };
+
+    if (chatContainer) {
+      chatContainer.addEventListener('touchstart', handleTouchStart);
+      chatContainer.addEventListener('touchmove', handleTouchMove, { passive: false });
+    }
+
+    return () => {
+      unsubscribe();
+      if (chatContainer) {
+        chatContainer.removeEventListener('touchstart', handleTouchStart);
+        chatContainer.removeEventListener('touchmove', handleTouchMove);
+      }
+    };
   }, [teamId]);
 
   const scrollToBottom = () => {
@@ -194,8 +233,10 @@ function TeamChat() {
         createdAt: new Date().toISOString()
       });
       setNewMessage('');
+      inputRef.current?.focus();
     } catch (error) {
       console.error('Error sending message:', error);
+      toast.error('Failed to send message');
     } finally {
       setSending(false);
     }
@@ -215,38 +256,88 @@ function TeamChat() {
       </div>
     );
   }
+
+  const MembersList = () => (
+    <div className="space-y-3">
+      {members && members.length > 0 ? (
+        members.map((member) => {
+          const displayName = member.displayName || 'Anonymous';
+          const photoURL = member.photoURL || '';
+          const experience = member.experience || 'Unknown';
+          const initialLetter = displayName ? displayName.charAt(0) : '?';
+
+          return (
+            <div 
+              key={member.uid} 
+              className="bg-white rounded-lg p-3 shadow-sm hover:shadow-md transition-all cursor-pointer"
+              onClick={() => toggleMemberDetails(member.uid)}
+            >
+              <div className="flex items-center space-x-3">
+                {photoURL ? (
+                  <img
+                    src={photoURL}
+                    alt={displayName}
+                    className="h-10 w-10 rounded-full border-2 border-blue-200"
+                  />
+                ) : (
+                  <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+                    <span className="text-blue-600 text-sm font-bold">
+                      {initialLetter}
+                    </span>
+                  </div>
+                )}
+                <div className="flex-1">
+                  <p className="text-sm font-medium text-gray-800">{displayName}</p>
+                  <p className="text-xs text-blue-600 flex items-center">
+                    <Zap className="h-3 w-3 mr-1" />
+                    {experience} Developer
+                  </p>
+                </div>
+              </div>
+              {showMemberDetails === member.uid && (
+                <div className="mt-3 bg-blue-50 rounded-lg p-3 text-sm text-gray-700">
+                  <p><strong>Experience:</strong> {experience}</p>
+                  {member.email && <p><strong>Email:</strong> {member.email}</p>}
+                </div>
+              )}
+            </div>
+          );
+        })
+      ) : (
+        <p className="text-gray-500 text-center">No team members found</p>
+      )}
+    </div>
+  );
   
   return (
-    <div className="mt-4 sm:mt-20">
-      <ToastContainer 
-        position="top-right"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop={false}
-        closeOnClick
-        rtl={false}
-        pauseOnFocusLoss
-        draggable
-        pauseOnHover
-      />
-      <div className="w-full max-w-6xl mx-auto px-2 sm:px-4 py-4 sm:py-8 bg-gradient-to-br from-blue-50 to-blue-100 min-h-screen">
-        <div className="bg-white rounded-lg sm:rounded-2xl shadow-xl sm:shadow-2xl overflow-hidden border border-blue-100 h-[calc(100vh-2rem)] sm:h-[calc(100vh-4rem)] flex flex-col lg:flex-row">
+    <div className="mt-0 sm:mt-20">
+      <ToastContainer position="top-right" />
+      <div className="w-full max-w-6xl mx-auto px-0 sm:px-4 py-0 sm:py-8 bg-gradient-to-br from-blue-50 to-blue-100 min-h-screen">
+        <div className="bg-white h-screen sm:h-[calc(100vh-4rem)] sm:rounded-2xl shadow-xl overflow-hidden border border-blue-100 flex flex-col lg:flex-row">
           {/* Chat Area */}
-          <div className="flex-1 flex flex-col">
+          <div className="flex-1 flex flex-col h-full">
             {/* Team Header */}
-            <div className="p-2 sm:p-4 border-b bg-blue-50 flex flex-col sm:flex-row justify-between items-start sm:items-center space-y-2 sm:space-y-0">
-              <div>
-                <h1 className="text-xl sm:text-2xl font-bold text-blue-800">{team?.name}</h1>
+            <div className="p-2 sm:p-4 border-b bg-blue-50 flex items-center justify-between">
+              <div className="flex items-center">
+                <h1 className="text-lg sm:text-2xl font-bold text-blue-800">{team?.name}</h1>
+                <Button
+                  variant="ghost"
+                  className="ml-2 lg:hidden"
+                  onClick={() => setShowMobileMembers(!showMobileMembers)}
+                >
+                  <Users className="h-5 w-5" />
+                </Button>
               </div>
               <Button 
                 variant="outline" 
-                className="text-blue-600 hover:bg-blue-50 w-full sm:w-auto"
+                className="text-blue-600 hover:bg-blue-50"
                 onClick={generateInviteLink}
               >
-                <UserPlus className="h-4 w-4 sm:h-5 sm:w-5 mr-2" /> Invite Members
+                <UserPlus className="h-4 w-4 sm:h-5 sm:w-5 sm:mr-2" />
+                <span className="hidden sm:inline">Invite Members</span>
               </Button>
             </div>
-  
+
             {/* Invite Link Section */}
             {showInviteLink && inviteLink && (
               <div className="p-2 sm:p-4 bg-blue-50 flex flex-col sm:flex-row items-start sm:items-center justify-between relative space-y-2 sm:space-y-0">
