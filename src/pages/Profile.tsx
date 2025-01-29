@@ -49,33 +49,29 @@ export default function Profile() {
     teams: true
   });
 
+  const [previewProfile, setPreviewProfile] = useState(false);
+
   useEffect(() => {
+    const fetchUserTeams = async () => {
+      if (!user) return;
 
-      
-  
-      const fetchUserTeams = async () => {
-        if (!user) return;
-    
-        try {
-          const teamsRef = collection(db, 'teams');
-          const teamsQuery = query(
-            teamsRef,
-            where('members', 'array-contains', user.uid)
-          );
-          const snapshot = await getDocs(teamsQuery);
-          const teamsData = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          } as Team));
-          setUserTeams(teamsData);
-        } catch (error) {
-          console.error('Error fetching teams:', error);
-        }
-      };
-    
-      fetchUserTeams();
+      try {
+        const teamsRef = collection(db, 'teams');
+        const teamsQuery = query(
+          teamsRef,
+          where('members', 'array-contains', user.uid)
+        );
+        const snapshot = await getDocs(teamsQuery);
+        const teamsData = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        } as Team));
+        setUserTeams(teamsData);
+      } catch (error) {
+        console.error('Error fetching teams:', error);
+      }
+    };
 
-    
     const fetchProfile = async () => {
       if (!user) return;
       
@@ -93,6 +89,7 @@ export default function Profile() {
       }
     };
 
+    fetchUserTeams();
     fetchProfile();
   }, [user]);
 
@@ -193,20 +190,67 @@ export default function Profile() {
     }));
   };
 
- 
-    const levelColors = {
-      beginner: 'bg-green-100 text-green-800',
-      intermediate: 'bg-yellow-100 text-yellow-800',
-      advanced: 'bg-red-100 text-red-800'
-    };
-  
-    const renderSkillLevelIndicator = (level: SkillLevel) => {
-      return (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${levelColors[level]}`}>
-          {level.charAt(0).toUpperCase() + level.slice(1)}
-        </span>
-      );
-    };
+  const levelColors = {
+    beginner: 'bg-green-100 text-green-800',
+    intermediate: 'bg-yellow-100 text-yellow-800',
+    advanced: 'bg-red-100 text-red-800'
+  };
+
+  const renderSkillLevelIndicator = (level: SkillLevel) => {
+    return (
+      <span className={`px-2 py-1 rounded-full text-xs font-medium ${levelColors[level]}`}>
+        {level.charAt(0).toUpperCase() + level.slice(1)}
+      </span>
+    );
+  };
+
+  const renderProfilePreview = () => (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto p-6">
+        <div className="flex justify-end mb-4">
+          <button onClick={() => setPreviewProfile(false)} className="text-gray-500 hover:text-gray-700">
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+        <div className="flex items-start">
+          <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center mr-4">
+            <Users className="h-8 w-8 text-gray-400" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold">{profile.displayName || "No Name Set"}</h2>
+            <p className="text-gray-500 capitalize">{profile.experience || "No Experience Set"} Developer</p>
+          </div>
+        </div>
+        <div className="mt-4">
+          <h3 className="text-lg font-semibold mb-2">About</h3>
+          <p className="text-gray-600">{profile.bio || "No bio set."}</p>
+        </div>
+        <div className="mt-4">
+          <h3 className="text-lg font-semibold mb-2">Skills</h3>
+          <div className="flex flex-wrap gap-2">
+            {profile.skills?.map((skill, index) => (
+              <span key={index} className="inline-flex items-center px-3 py-1 rounded-full bg-gray-100 text-gray-800">
+                {skillCategories.find(cat => cat.id === skill.category)?.icon}
+                <span className="ml-2">{skill.name}</span>
+                <span className="ml-1 text-gray-500">• {skill.level}</span>
+              </span>
+            ))}
+          </div>
+        </div>
+        {(profile.githubUrl || profile.linkedinUrl || profile.portfolioUrl) && (
+          <div className="mt-4">
+            <h3 className="text-lg font-semibold mb-2">Links</h3>
+            <div className="space-y-2">
+              {profile.githubUrl && <a href={profile.githubUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline block">GitHub Profile</a>}
+              {profile.linkedinUrl && <a href={profile.linkedinUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline block">LinkedIn Profile</a>}
+              {profile.portfolioUrl && <a href={profile.portfolioUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline block">Portfolio Website</a>}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
   return (
     <div className="mt-16 sm:mt-20">
       <div className="max-w-5xl mx-auto space-y-6 sm:space-y-8 p-4 sm:p-6 bg-gradient-to-br from-gray-50 to-blue-50 min-h-screen">
@@ -231,10 +275,17 @@ export default function Profile() {
               >
                 {saving ? 'Saving...' : <><Check className="mr-2 h-4 w-4" /> Save Changes</>}
               </Button>
+              <Button 
+                onClick={() => setPreviewProfile(true)}
+                className="w-full sm:w-auto bg-gradient-to-r from-indigo-600 to-purple-700 hover:from-indigo-700 hover:to-purple-800 transition-all text-white"
+              >
+                Preview My Profile
+              </Button>
             </div>
           </div>
-        {/* Basic Information */}
-        <section className="mb-8 sm:mb-12">
+
+          {/* Basic Information */}
+          <section className="mb-8 sm:mb-12">
             <div 
               className="flex items-center justify-between cursor-pointer"
               onClick={() => toggleSection('basicInfo')}
@@ -287,9 +338,6 @@ export default function Profile() {
             )}
           </section>
 
-
-
-{/* Skills Section */}
           {/* Skills Section */}
           <section className="mb-8 sm:mb-12">
             <div 
@@ -375,114 +423,135 @@ export default function Profile() {
             )}
           </section>
 
-        {/* Social Links */}
-        <section>
-          <h2 className="text-xl font-semibold text-gray-700 mb-4 border-b pb-2">
-            Social Links
-          </h2>
-          <div className="grid md:grid-cols-2 gap-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-600 mb-2">
-                GitHub Profile
-              </label>
-              <input
-                type="url"
-                className="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500"
-                value={profile.githubUrl || ''}
-                onChange={e => setProfile(prev => ({ ...prev, githubUrl: e.target.value }))}
-                placeholder="https://github.com/username"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-600 mb-2">
-                LinkedIn Profile
-              </label>
-              <input
-                type="url"
-                className="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500"
-                value={profile.linkedinUrl || ''}
-                onChange={e => setProfile(prev => ({ ...prev, linkedinUrl: e.target.value }))}
-                placeholder="https://linkedin.com/in/username"
-              />
-            </div>
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-gray-600 mb-2">
-                Portfolio Website
-              </label>
-              <input
-                type="url"
-                className="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500"
-                value={profile.portfolioUrl || ''}
-                onChange={e => setProfile(prev => ({ ...prev, portfolioUrl: e.target.value }))}
-                placeholder="https://yourportfolio.com"
-              />
-            </div>
-          </div>
-        </section>
-
-{/* Teams Section */}
-<div className="bg-white rounded-lg shadow-md p-4 sm:p-6 w-full">
-  <h2 className="text-lg sm:text-xl font-bold mb-4">Your Teams</h2>
-  {userTeams.length === 0 ? (
-    <div className="text-center py-6 sm:py-8">
-      <Users className="mx-auto h-8 w-8 sm:h-12 sm:w-12 text-gray-400" />
-      <h3 className="mt-2 text-sm font-medium text-gray-900">No teams yet</h3>
-      <p className="mt-1 text-sm text-gray-500">
-        Join or create a team to get started
-      </p>
-    </div>
-  ) : (
-    <div className="space-y-4">
-    {userTeams.map(team => (
-      <div
-        key={team.id}
-        className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-gray-50 rounded-lg gap-4"
-      >
-        <div className="w-full sm:w-auto">
-          <h3 className="font-medium">{team.name}</h3>
-          {team.description && (
-            <p className="text-sm text-gray-500 mt-1">{team.description}</p>
-          )}
-        </div>
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
-          {team.createdBy === user?.uid ? (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleDeleteTeam(team.id)}
-              className="w-full sm:w-auto justify-center"
+          {/* Social Links */}
+          <section className="mb-8 sm:mb-12">
+            <div 
+              className="flex items-center justify-between cursor-pointer"
+              onClick={() => toggleSection('socialLinks')}
             >
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete Team
-            </Button>
-          ) : (
-            <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleLeaveTeam(team.id)}
-            className="w-full sm:w-auto justify-center"
-          >
-            <LogOut className="mr-2 h-4 w-4" />
-            Leave Team
-          </Button>
-        )}
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => navigate(`/team/${team.id}`)}
-          className="w-full sm:w-auto justify-center"
-        >
-          <MessageCircle className="mr-2 h-4 w-4" />
-          Open Chat
-        </Button>
-          </div>
-        </div>
-      ))}
-    </div>
-  )}
-</div>
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-700 mb-4 border-b pb-2">
+                Social Links
+              </h2>
+              {expandedSections.socialLinks ? <ChevronUp /> : <ChevronDown />}
+            </div>
+
+            {expandedSections.socialLinks && (
+              <div className="grid md:grid-cols-2 gap-6 animate-slide-down">
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-2">
+                    GitHub Profile
+                  </label>
+                  <input
+                    type="url"
+                    className="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                    value={profile.githubUrl || ''}
+                    onChange={e => setProfile(prev => ({ ...prev, githubUrl: e.target.value }))}
+                    placeholder="https://github.com/username"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-600 mb-2">
+                    LinkedIn Profile
+                  </label>
+                  <input
+                    type="url"
+                    className="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                    value={profile.linkedinUrl || ''}
+                    onChange={e => setProfile(prev => ({ ...prev, linkedinUrl: e.target.value }))}
+                    placeholder="https://linkedin.com/in/username"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-600 mb-2">
+                    Portfolio Website
+                  </label>
+                  <input
+                    type="url"
+                    className="w-full rounded-lg border-gray-300 focus:ring-blue-500 focus:border-blue-500"
+                    value={profile.portfolioUrl || ''}
+                    onChange={e => setProfile(prev => ({ ...prev, portfolioUrl: e.target.value }))}
+                    placeholder="https://yourportfolio.com"
+                  />
+                </div>
+              </div>
+            )}
+          </section>
+
+          {/* Teams Section */}
+          <section>
+            <div 
+              className="flex items-center justify-between cursor-pointer"
+              onClick={() => toggleSection('teams')}
+            >
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-700 mb-4 border-b pb-2">
+                Your Teams
+              </h2>
+              {expandedSections.teams ? <ChevronUp /> : <ChevronDown />}
+            </div>
+
+            {expandedSections.teams && (
+              <div className="space-y-4 animate-slide-down">
+                {userTeams.length === 0 ? (
+                  <div className="text-center py-6 sm:py-8">
+                    <Users className="mx-auto h-8 w-8 sm:h-12 sm:w-12 text-gray-400" />
+                    <h3 className="mt-2 text-sm font-medium text-gray-900">No teams yet</h3>
+                    <p className="mt-1 text-sm text-gray-500">
+                      Join or create a team to get started
+                    </p>
+                  </div>
+                ) : (
+                  userTeams.map(team => (
+                    <div
+                      key={team.id}
+                      className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-gray-50 rounded-lg gap-4"
+                    >
+                      <div className="w-full sm:w-auto">
+                        <h3 className="font-medium">{team.name}</h3>
+                        {team.description && (
+                          <p className="text-sm text-gray-500 mt-1">{team.description}</p>
+                        )}
+                      </div>
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+                        {team.createdBy === user?.uid ? (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDeleteTeam(team.id)}
+                            className="w-full sm:w-auto justify-center"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete Team
+                          </Button>
+                        ) : (
+                          <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleLeaveTeam(team.id)}
+                          className="w-full sm:w-auto justify-center"
+                        >
+                          <LogOut className="mr-2 h-4 w-4" />
+                          Leave Team
+                        </Button>
+                      )}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => navigate(`/team/${team.id}`)}
+                        className="w-full sm:w-auto justify-center"
+                      >
+                        <MessageCircle className="mr-2 h-4 w-4" />
+                        Open Chat
+                      </Button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+        </section>
       </div>
     </div>
-    </div>
+    {previewProfile && renderProfilePreview()}
+  </div>
   );
 }
