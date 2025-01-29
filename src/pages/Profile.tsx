@@ -80,7 +80,19 @@ export default function Profile() {
         const docSnap = await getDoc(docRef);
         
         if (docSnap.exists()) {
-          setProfile(docSnap.data() as User);
+          const userData = docSnap.data() as User;
+          setProfile({
+            ...userData,
+            photoURL: user.photoURL || userData.photoURL || null,
+            // Set displayName only if it's not set in Firestore
+            displayName: userData.displayName || user.displayName || ''
+          });
+        } else {
+          // If no user in Firestore, use Google's data
+          setProfile({
+            photoURL: user.photoURL || null,
+            displayName: user.displayName || ''
+          });
         }
       } catch (error) {
         console.error('Error fetching profile:', error);
@@ -213,9 +225,17 @@ export default function Profile() {
           </button>
         </div>
         <div className="flex items-start">
-          <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center mr-4">
-            <Users className="h-8 w-8 text-gray-400" />
-          </div>
+          {profile.photoURL ? (
+            <img 
+              src={profile.photoURL} 
+              alt={profile.displayName || "User's Profile"} 
+              className="w-16 h-16 rounded-full mr-4"
+            />
+          ) : (
+            <div className="w-16 h-16 rounded-full bg-gray-200 flex items-center justify-center mr-4">
+              <Users className="h-8 w-8 text-gray-400" />
+            </div>
+          )}
           <div>
             <h2 className="text-2xl font-bold">{profile.displayName || "No Name Set"}</h2>
             <p className="text-gray-500 capitalize">{profile.experience || "No Experience Set"} Developer</p>
@@ -299,6 +319,20 @@ export default function Profile() {
             {expandedSections.basicInfo && (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 animate-slide-down">
                 <div className="relative group">
+                  <label className="block text-sm font-medium text-gray-600 mb-2">Display Name</label>
+                  <input
+                    type="text"
+                    className="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm sm:text-base"
+                    value={profile.displayName || ''}
+                    onChange={e => setProfile(prev => ({ ...prev, displayName: e.target.value }))}
+                    placeholder="Enter your name"
+                  />
+                  <div className="absolute bottom-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <Edit className="h-4 w-4 text-gray-500" />
+                  </div>
+                </div>
+                
+                <div className="relative group">
                   <label className="block text-sm font-medium text-gray-600 mb-2">Bio</label>
                   <textarea
                     className="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-sm sm:text-base"
@@ -311,7 +345,7 @@ export default function Profile() {
                     <Edit className="h-4 w-4 text-gray-500" />
                   </div>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-600 mb-2">
                     Experience Level
@@ -337,7 +371,6 @@ export default function Profile() {
               </div>
             )}
           </section>
-
           {/* Skills Section */}
           <section className="mb-8 sm:mb-12">
             <div 
@@ -511,7 +544,8 @@ export default function Profile() {
                           <p className="text-sm text-gray-500 mt-1">{team.description}</p>
                         )}
                       </div>
-                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+                      <div className="flex flex-col sm:flex-row items
+                                            sm:items-center gap-2 w-full sm:w-auto">
                         {team.createdBy === user?.uid ? (
                           <Button
                             variant="outline"
@@ -524,34 +558,34 @@ export default function Profile() {
                           </Button>
                         ) : (
                           <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleLeaveTeam(team.id)}
+                            className="w-full sm:w-auto justify-center"
+                          >
+                            <LogOut className="mr-2 h-4 w-4" />
+                            Leave Team
+                          </Button>
+                        )}
+                        <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => handleLeaveTeam(team.id)}
+                          onClick={() => navigate(`/team/${team.id}`)}
                           className="w-full sm:w-auto justify-center"
                         >
-                          <LogOut className="mr-2 h-4 w-4" />
-                          Leave Team
+                          <MessageCircle className="mr-2 h-4 w-4" />
+                          Open Chat
                         </Button>
-                      )}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => navigate(`/team/${team.id}`)}
-                        className="w-full sm:w-auto justify-center"
-                      >
-                        <MessageCircle className="mr-2 h-4 w-4" />
-                        Open Chat
-                      </Button>
+                      </div>
                     </div>
-                  </div>
-                ))
-              )}
-            </div>
-          )}
-        </section>
+                  ))
+                )}
+              </div>
+            )}
+          </section>
+        </div>
       </div>
+      {previewProfile && renderProfilePreview()}
     </div>
-    {previewProfile && renderProfilePreview()}
-  </div>
   );
 }
