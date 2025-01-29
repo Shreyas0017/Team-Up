@@ -18,7 +18,7 @@ import { Button } from '@/components/ui/Button';
 import { User, SkillCategory, TeamRequest } from '@/types';
 import { 
   Users, Search, Filter, Code, Palette, Phone, Database, 
-  Layout, Briefcase, LineChart , X
+  Layout, Briefcase, LineChart, X
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 
@@ -44,7 +44,7 @@ export default function Teams() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   useEffect(() => {
-    const fetchUsers = async () => {
+    const fetchUsersAndConnections = async () => {
       if (!user) return;
 
       try {
@@ -54,11 +54,29 @@ export default function Teams() {
           .filter(doc => doc.id !== user.uid)
           .map(doc => ({
             uid: doc.id,
-            ...doc.data()
+            ...doc.data(),
+            connections: 0 // Initialize connections count
           } as User));
+
+        // Fetch connections count
+        const requestsRef = collection(db, 'teamRequests');
+        const connectionsQuery = query(
+          requestsRef, 
+          where('status', '==', 'accepted')
+        );
+        const connectionsSnapshot = await getDocs(connectionsQuery);
+        
+        connectionsSnapshot.forEach(doc => {
+          const request = doc.data();
+          const userIndex = usersData.findIndex(u => u.uid === request.senderId || u.uid === request.receiverId);
+          if (userIndex !== -1) {
+            usersData[userIndex].connections += 1;
+          }
+        });
+
         setUsers(usersData);
       } catch (error) {
-        console.error('Error fetching users:', error);
+        console.error('Error fetching users and connections:', error);
       } finally {
         setLoading(false);
       }
@@ -88,14 +106,13 @@ export default function Teams() {
       }
     };
 
-    fetchUsers();
+    fetchUsersAndConnections();
     fetchRequests();
   }, [user]);
 
   const handleConnect = async (targetUser: User) => {
     if (!user) return;
     
-    // Check if a request already exists
     const existingRequest = requests.find(
       req => 
         (req.senderId === user.uid && req.receiverId === targetUser.uid) ||
@@ -143,6 +160,9 @@ export default function Teams() {
       setRequests(prev => prev.map(req => 
         req.id === request.id ? { ...req, status: 'accepted' } : req
       ));
+      // Update connections count for both users
+      updateUserConnections(request.senderId, 1);
+      updateUserConnections(request.receiverId, 1);
     } catch (error) {
       console.error('Error accepting request:', error);
     }
@@ -172,9 +192,22 @@ export default function Teams() {
       await deleteDoc(requestDoc);
 
       setRequests(prev => prev.filter(req => req.id !== request.id));
+      // Decrease connections count for both users
+      updateUserConnections(request.senderId, -1);
+      updateUserConnections(request.receiverId, -1);
     } catch (error) {
       console.error('Error removing connection:', error);
     }
+  };
+
+  const updateUserConnections = (userId: string, increment: number) => {
+    setUsers(prevUsers => 
+      prevUsers.map(user => 
+        user.uid === userId ? 
+        { ...user, connections: user.connections + increment } : 
+        user
+      )
+    );
   };
 
   const getRequestStatus = (targetUser: User) => {
@@ -223,23 +256,23 @@ export default function Teams() {
 
   return (
     <div className="mt-20">
-    <div className="max-w-7xl mx-auto px-4 py-8 bg-gradient-to-br from-gray-50 to-blue-50 min-h-screen">
-      <motion.div 
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="flex justify-between items-center mb-8"
-      >
-        <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
-          Find Teammates
-        </h1>
-        <Link to="/create-team">
-          <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all text-white">
-            <Users className="mr-2 h-5 w-5" />
-            Create Team
-          </Button>
-        </Link>
-      </motion.div>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 bg-gradient-to-br from-gray-50 to-blue-50 min-h-screen">
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="flex flex-col sm:flex-row justify-between items-center mb-8"
+        >
+          <h1 className="text-3xl sm:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 mb-4 sm:mb-0">
+            Find Teammates
+          </h1>
+          <Link to="/create-team">
+            <Button className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all text-white">
+              <Users className="mr-2 h-5 w-5" />
+              Create Team
+            </Button>
+          </Link>
+        </motion.div>
 
         {/* Search and Filters */}
         <div className="bg-white rounded-lg shadow-md p-6 mb-8">
@@ -284,7 +317,7 @@ export default function Teams() {
           {/* Experience Level */}
           <div>
             <h3 className="text-sm font-medium text-gray-700 mb-2">Experience Level</h3>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               {['beginner', 'intermediate', 'advanced'].map(level => (
                 <button
                   key={level}
@@ -301,86 +334,88 @@ export default function Teams() {
             </div>
           </div>
         </div>
-       
-      {/* User Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-  {filteredUsers.map(targetUser => (
-    <div 
-      key={targetUser.uid} 
-      className="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow"
-      onClick={() => setSelectedUser(targetUser)} // Add this line
-    >
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-center">
-                {targetUser.photoURL ? (
-                  <img
-                    src={targetUser.photoURL}
-                    alt={targetUser.displayName}
-                    className="w-12 h-12 rounded-full"
-                  />
-                ) : (
-                  <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">
-                    <Users className="h-6 w-6 text-gray-400" />
+
+        {/* User Grid */}
+        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+          {filteredUsers.map(targetUser => (
+            <div 
+              key={targetUser.uid} 
+              className="bg-white rounded-lg shadow-md p-6 cursor-pointer hover:shadow-lg transition-shadow"
+              onClick={() => setSelectedUser(targetUser)}
+            >
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-center">
+                  {targetUser.photoURL ? (
+                    <img
+                      src={targetUser.photoURL}
+                      alt={targetUser.displayName}
+                      className="w-12 h-12 rounded-full"
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">
+                      <Users className="h-6 w-6 text-gray-400" />
+                    </div>
+                  )}
+                  <div className="ml-3">
+                    <h3 className="font-semibold">{targetUser.displayName}</h3>
+                    <p className="text-sm text-gray-500 capitalize">
+                      {targetUser.experience} Developer
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {targetUser.connections} Connections
+                    </p>
                   </div>
-                )}
-                <div className="ml-3">
-                  <h3 className="font-semibold">{targetUser.displayName}</h3>
-                  <p className="text-sm text-gray-500 capitalize">
-                    {targetUser.experience} Developer
-                  </p>
                 </div>
+                
+                <Button
+                  size="sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleConnect(targetUser);
+                  }}
+                  disabled={
+                    connectingTo === targetUser.uid || 
+                    getRequestStatus(targetUser) === 'pending'
+                  }
+                  className={`
+                    ${getRequestStatus(targetUser) === 'accepted' 
+                      ? 'bg-green-500 text-white' 
+                      : 'bg-blue-500 text-white'}
+                  `}
+                >
+                  {connectingTo === targetUser.uid 
+                    ? 'Sending...' 
+                    : getRequestStatus(targetUser) === 'pending'
+                      ? 'Pending'
+                      : getRequestStatus(targetUser) === 'accepted'
+                        ? 'Connected'
+                        : 'Connect'}
+                </Button>
               </div>
               
-              <Button
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleConnect(targetUser);
-                }}
-                disabled={
-                  connectingTo === targetUser.uid || 
-                  getRequestStatus(targetUser) === 'pending'
-                }
-                className={`
-                  ${getRequestStatus(targetUser) === 'accepted' 
-                    ? 'bg-green-500 text-white' 
-                    : 'bg-blue-500 text-white'}
-                `}
-              >
-                {connectingTo === targetUser.uid 
-                  ? 'Sending...' 
-                  : getRequestStatus(targetUser) === 'pending'
-                    ? 'Pending'
-                    : getRequestStatus(targetUser) === 'accepted'
-                      ? 'Connected'
-                      : 'Connect'}
-              </Button>
-            </div>
-            
-            {targetUser.bio && (
-              <p className="text-sm text-gray-600 mb-4 line-clamp-2">
-                {targetUser.bio}
-              </p>
-            )}
+              {targetUser.bio && (
+                <p className="text-sm text-gray-600 mb-4 line-clamp-3">
+                  {targetUser.bio}
+                </p>
+              )}
 
-            <div className="space-y-2">
-              <h4 className="text-sm font-medium text-gray-700">Skills</h4>
-              <div className="flex flex-wrap gap-2">
-                {targetUser.skills?.map((skill, index) => (
-                  <span
-                    key={index}
-                    className="inline-flex items-center px-2 py-1 rounded-md bg-gray-100 text-gray-800 text-sm"
-                  >
-                    {skillCategories.find(cat => cat.id === skill.category)?.icon}
-                    <span className="ml-1">{skill.name}</span>
-                  </span>
-                ))}
+              <div className="space-y-2">
+                <h4 className="text-sm font-medium text-gray-700">Skills</h4>
+                <div className="flex flex-wrap gap-2">
+                  {targetUser.skills?.map((skill, index) => (
+                    <span
+                      key={index}
+                      className="inline-flex items-center px-2 py-1 rounded-md bg-gray-100 text-gray-800 text-xs"
+                    >
+                      {skillCategories.find(cat => cat.id === skill.category)?.icon}
+                      <span className="ml-1">{skill.name}</span>
+                    </span>
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
-
+          ))}
+        </div>
 
         {/* Profile Modal */}
         {selectedUser && (
@@ -403,6 +438,9 @@ export default function Teams() {
                     <div className="ml-4">
                       <h2 className="text-2xl font-bold">{selectedUser.displayName}</h2>
                       <p className="text-gray-500 capitalize">{selectedUser.experience} Developer</p>
+                      <p className="text-sm text-gray-500">
+                        {selectedUser.connections} Connections
+                      </p>
                     </div>
                   </div>
                   <button
@@ -477,24 +515,24 @@ export default function Teams() {
                 </div>
 
                 <div className="mt-6 flex justify-end">
-  {getRequestStatus(selectedUser) !== 'accepted' && (
-    <Button
-      onClick={(e) => {
-        e.stopPropagation();
-        handleConnect(selectedUser);
-        setSelectedUser(null);
-      }}
-      disabled={connectingTo === selectedUser.uid}
-    >
-      {connectingTo === selectedUser.uid ? 'Sending Request...' : 'Send Connection Request'}
-    </Button>
-  )}
-</div>
+                  {getRequestStatus(selectedUser) !== 'accepted' && (
+                    <Button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleConnect(selectedUser);
+                        setSelectedUser(null);
+                      }}
+                      disabled={connectingTo === selectedUser.uid}
+                    >
+                      {connectingTo === selectedUser.uid ? 'Sending Request...' : 'Send Connection Request'}
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
           </div>
         )}
+      </div>
     </div>
-  </div>
-);
+  );
 }
