@@ -163,7 +163,7 @@ service cloud.firestore {
 
 ## 👥 Contributors  
 
-Thanks to the amazing contributors who made this project possible! 🚀  
+ 
 
 <table>
   <tr>
