@@ -38,8 +38,13 @@ Hackathon Team Builder is a **web application** that helps college students form
 ## 📷 UI Preview  
 
 ![Team Builder UI 1](https://github.com/Sahnik0/Team-Up/blob/5ee2ff82681fb08723e175db6fd3783b9a12b6c2/WhatsApp%20Image%202025-01-26%20at%2021.21.49_0095e22f.jpg)  
+
+
 ![Team Builder UI 2](https://github.com/Sahnik0/Team-Up/blob/d3a5af315e6510d96187a6452d18adaea59a6e9a/WhatsApp%20Image%202025-01-26%20at%2021.22.27_9a591684.jpg)  
+
+
 ![Team Builder UI 3](https://github.com/Sahnik0/Team-Up/blob/493fa5e6d0aa5b7bf732860e3954901545e65f08/WhatsApp%20Image%202025-01-26%20at%2021.22.54_fae6dd5a.jpg)  
+
 
 ---
 
