@@ -184,7 +184,7 @@ service cloud.firestore {
 
 For queries or feedback, reach out to:  
 - 📛 **Sahnik Biswas**  
-- ✉️ **Email:** [biswassahnik@gmail.com](mailto:biswassahnik@gmail.com)  
+- ✉️ **Email:** [tb123983@gmail.com](tb123983@gmail.com)  
 - 🔗 **GitHub:** [Sahnik Biswas](https://github.com/Sahnik0)  
 
 ---
