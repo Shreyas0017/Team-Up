@@ -1,0 +1,4 @@
+
+User-agent: *
+Allow: /
+Sitemap: https://team-up-fldl.vercel.app/sitemap.xml
