@@ -32,6 +32,38 @@ const skillCategories: { id: SkillCategory; label: string; icon: React.ReactNode
   { id: 'data', label: 'Data', icon: <LineChart className="h-5 w-5" /> },
 ];
 
+const getBadgeInfo = (connections: number) => {
+  if (connections >= 20) {
+    return {
+      label: 'Elite Networker',
+      color: 'bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-600',
+      textColor: 'text-amber-900',
+      borderColor: 'border-amber-300',
+      icon: '👑',
+      ringColor: 'ring-amber-200'
+    };
+  } else if (connections >= 10) {
+    return {
+      label: 'Pro Connector',
+      color: 'bg-gradient-to-r from-blue-400 via-blue-500 to-blue-600',
+      textColor: 'text-blue-900',
+      borderColor: 'border-blue-300',
+      icon: '⭐',
+      ringColor: 'ring-blue-200'
+    };
+  } else if (connections >= 5) {
+    return {
+      label: 'Rising Star',
+      color: 'bg-gradient-to-r from-emerald-400 via-emerald-500 to-emerald-600',
+      textColor: 'text-emerald-900',
+      borderColor: 'border-emerald-300',
+      icon: '🌟',
+      ringColor: 'ring-emerald-200'
+    };
+  }
+  return null;
+};
+
 export default function Teams() {
   const { user } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
@@ -54,7 +86,7 @@ export default function Teams() {
           .filter(doc => doc.id !== user.uid)
           .map(doc => ({
             uid: doc.id,
-            ...doc.data(),
+            ...(doc.data() as any),
             connections: 0 // Initialize connections count
           } as User));
 
@@ -357,7 +389,26 @@ export default function Teams() {
                     </div>
                   )}
                   <div className="ml-3">
-                    <h3 className="font-semibold">{targetUser.displayName}</h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold">{targetUser.displayName}</h3>
+                      {getBadgeInfo(targetUser.connections) && (
+                        <span
+                          className={`
+                            ${getBadgeInfo(targetUser.connections)?.color}
+                            inline-flex items-center p-1.5 
+                            border ${getBadgeInfo(targetUser.connections)?.borderColor}
+                            shadow-sm ring-1 ring-inset ${getBadgeInfo(targetUser.connections)?.ringColor}
+                            rounded-full backdrop-blur-sm backdrop-filter
+                            transition-all duration-300 ease-in-out
+                            hover:scale-110
+                            tooltip-container
+                          `}
+                          title={getBadgeInfo(targetUser.connections)?.label}
+                        >
+                          <span className="text-base">{getBadgeInfo(targetUser.connections)?.icon}</span>
+                        </span>
+                      )}
+                    </div>
                     <p className="text-sm text-gray-500 capitalize">
                       {targetUser.experience} Developer
                     </p>
@@ -436,7 +487,28 @@ export default function Teams() {
                       </div>
                     )}
                     <div className="ml-4">
-                      <h2 className="text-2xl font-bold">{selectedUser.displayName}</h2>
+                      <div className="flex items-center gap-2">
+                        <h2 className="text-2xl font-bold">{selectedUser.displayName}</h2>
+                        {getBadgeInfo(selectedUser.connections) && (
+                          <span
+                            className={`
+                              ${getBadgeInfo(selectedUser.connections)?.color}
+                              inline-flex items-center px-3 py-1.5 text-sm font-medium
+                              border ${getBadgeInfo(selectedUser.connections)?.borderColor}
+                              shadow-sm ring-1 ring-inset ${getBadgeInfo(selectedUser.connections)?.ringColor}
+                              rounded-full backdrop-blur-sm backdrop-filter
+                              transition-all duration-300 ease-in-out
+                              hover:scale-105 hover:shadow-md
+                              animate-fadeIn
+                            `}
+                          >
+                            <span className="mr-2 text-lg">{getBadgeInfo(selectedUser.connections)?.icon}</span>
+                            <span className="font-semibold text-white">
+                              {getBadgeInfo(selectedUser.connections)?.label}
+                            </span>
+                          </span>
+                        )}
+                      </div>
                       <p className="text-gray-500 capitalize">{selectedUser.experience} Developer</p>
                       <p className="text-sm text-gray-500">
                         {selectedUser.connections} Connections
@@ -536,3 +608,4 @@ export default function Teams() {
     </div>
   );
 }
+

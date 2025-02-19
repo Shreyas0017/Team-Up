@@ -166,6 +166,85 @@ export default function Home() {
               </div>
             </div>
           </motion.section>
+
+          {/* Footer Section */}
+          <footer className="bg-gray-50 border-t border-gray-200">
+            <div className="container mx-auto px-4 py-12">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+                {/* Company Info */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Team Up</h3>
+                  <p className="text-gray-600 text-sm">
+                    Connecting students for successful hackathon collaborations.
+                  </p>
+                </div>
+
+                {/* Quick Links */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Links</h3>
+                  <ul className="space-y-2">
+                    <li><Link to="/teams" className="text-gray-600 hover:text-blue-600 text-sm">Find Teams</Link></li>
+                    <li><Link to="/profile" className="text-gray-600 hover:text-blue-600 text-sm">Profile</Link></li>
+                    <li><Link to="/chat" className="text-gray-600 hover:text-blue-600 text-sm">Messages</Link></li>
+                  </ul>
+                </div>
+
+                {/* Resources */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Resources</h3>
+                  <ul className="space-y-2">
+                    <li><a href="#" className="text-gray-600 hover:text-blue-600 text-sm">Help Center</a></li>
+                    <li><a href="#" className="text-gray-600 hover:text-blue-600 text-sm">Guidelines</a></li>
+                    <li><a href="#" className="text-gray-600 hover:text-blue-600 text-sm">FAQ</a></li>
+                  </ul>
+                </div>
+
+                {/* Contact */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Contact</h3>
+                  <ul className="space-y-2">
+                    <li className="text-gray-600 text-sm">Email: tb123983@gmail.com</li>
+                    <li>
+                      <a 
+                        href="https://x.com/sahnik_biswas" 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="text-gray-600 hover:text-blue-600 text-sm inline-flex items-center"
+                      >
+                        Twitter: @sahnik_biswas
+                      </a>
+                    </li>
+                    <li>
+                      <a 
+                        href="https://github.com/Sahnik0" 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="text-gray-600 hover:text-blue-600 text-sm inline-flex items-center"
+                      >
+                        GitHub: Sahnik0
+                      </a>
+                    </li>
+                    <li>
+                      <a 
+                        href="https://www.linkedin.com/in/sahnik-biswas-8514012a7/" 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="text-gray-600 hover:text-blue-600 text-sm inline-flex items-center"
+                      >
+                        LinkedIn: Sahnik Biswas
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className="border-t border-gray-200 mt-8 pt-8 text-center">
+                <p className="text-gray-600 text-sm">
+                  © {new Date().getFullYear()} Team Up. All rights reserved.
+                </p>
+              </div>
+            </div>
+          </footer>
         </div>
       </div>
     </>
