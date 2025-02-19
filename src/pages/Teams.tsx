@@ -393,19 +393,10 @@ export default function Teams() {
                       <h3 className="font-semibold">{targetUser.displayName}</h3>
                       {getBadgeInfo(targetUser.connections) && (
                         <span
-                          className={`
-                            ${getBadgeInfo(targetUser.connections)?.color}
-                            inline-flex items-center p-1.5 
-                            border ${getBadgeInfo(targetUser.connections)?.borderColor}
-                            shadow-sm ring-1 ring-inset ${getBadgeInfo(targetUser.connections)?.ringColor}
-                            rounded-full backdrop-blur-sm backdrop-filter
-                            transition-all duration-300 ease-in-out
-                            hover:scale-110
-                            tooltip-container
-                          `}
+                          className="text-lg cursor-help"
                           title={getBadgeInfo(targetUser.connections)?.label}
                         >
-                          <span className="text-base">{getBadgeInfo(targetUser.connections)?.icon}</span>
+                          {getBadgeInfo(targetUser.connections)?.icon}
                         </span>
                       )}
                     </div>
@@ -490,23 +481,14 @@ export default function Teams() {
                       <div className="flex items-center gap-2">
                         <h2 className="text-2xl font-bold">{selectedUser.displayName}</h2>
                         {getBadgeInfo(selectedUser.connections) && (
-                          <span
-                            className={`
-                              ${getBadgeInfo(selectedUser.connections)?.color}
-                              inline-flex items-center px-3 py-1.5 text-sm font-medium
-                              border ${getBadgeInfo(selectedUser.connections)?.borderColor}
-                              shadow-sm ring-1 ring-inset ${getBadgeInfo(selectedUser.connections)?.ringColor}
-                              rounded-full backdrop-blur-sm backdrop-filter
-                              transition-all duration-300 ease-in-out
-                              hover:scale-105 hover:shadow-md
-                              animate-fadeIn
-                            `}
-                          >
-                            <span className="mr-2 text-lg">{getBadgeInfo(selectedUser.connections)?.icon}</span>
-                            <span className="font-semibold text-white">
+                          <div className="flex items-center gap-2 animate-fadeIn">
+                            <span className="text-xl">
+                              {getBadgeInfo(selectedUser.connections)?.icon}
+                            </span>
+                            <span className="text-sm font-medium text-gray-600">
                               {getBadgeInfo(selectedUser.connections)?.label}
                             </span>
-                          </span>
+                          </div>
                         )}
                       </div>
                       <p className="text-gray-500 capitalize">{selectedUser.experience} Developer</p>
