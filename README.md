@@ -106,6 +106,17 @@ Hackathon Team Builder is a **web application** that helps college students form
    export const db = getFirestore(app);
    ```
 
+4️⃣ Create an env file:  
+   ```env
+   VITE_FIREBASE_API_KEY="<YOUR_API_KEY>"
+   VITE_FIREBASE_AUTH_DOMAIN="<YOUR_AUTH_DOMAIN>"
+   VITE_FIREBASE_PROJECT_ID="<YOUR_PROJECT_ID>"
+   VITE_FIREBASE_STORAGE_BUCKET="<YOUR_STORAGE_BUCKET>"
+   VITE_FIREBASE_MESSAGING_SENDER_ID="<YOUR_MESSAGE_SENDER_ID>"
+   VITE_FIREBASE_APP_ID="<YOUR_APP_ID>"
+   VITE_FIREBASE_MEASUREMENT_ID="<YOUR_MEASUREMENT_ID>"
+   ```
+
 4️⃣ Start the development server:  
    ```bash
    npm run dev
