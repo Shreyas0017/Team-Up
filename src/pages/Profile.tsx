@@ -83,14 +83,14 @@ export default function Profile() {
           const userData = docSnap.data() as User;
           setProfile({
             ...userData,
-            photoURL: user.photoURL || userData.photoURL || null,
+            photoURL: user.photoURL || userData.photoURL || undefined,
             // Set displayName only if it's not set in Firestore
             displayName: userData.displayName || user.displayName || ''
           });
         } else {
           // If no user in Firestore, use Google's data
           setProfile({
-            photoURL: user.photoURL || null,
+            photoURL: user.photoURL || undefined,
             displayName: user.displayName || ''
           });
         }
