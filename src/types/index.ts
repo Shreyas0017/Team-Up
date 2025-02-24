@@ -11,6 +11,7 @@ export interface User {
   githubUrl?: string;
   linkedinUrl?: string;
   portfolioUrl?: string;
+  connections: number;
 }
 
 export interface Team {

@@ -79,6 +79,7 @@ Hackathon Team Builder is a **web application** that helps college students form
    npm install
    npm install -g firebase-tools
    npm install firebase
+   npm i --save-dev @types/react-helmet
    ```  
 3️⃣ Set up Firebase:  
    - Create a **Firebase project**.  
