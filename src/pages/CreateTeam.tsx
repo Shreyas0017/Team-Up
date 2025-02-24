@@ -64,7 +64,7 @@ export default function CreateTeam() {
           // Fetch users by document ID instead of 'uid' field
           const connectedUsers = await Promise.all(
             Array.from(connectedUserIds).map(async (userId) => {
-              const userDocRef = doc(db, 'users', userId);
+              const userDocRef = doc(db, 'users', userId as string);
               const userDocSnap = await getDoc(userDocRef);
               return {
                 uid: userDocSnap.id,
