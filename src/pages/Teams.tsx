@@ -161,17 +161,18 @@ export default function Teams() {
       const requestsRef = collection(db, 'teamRequests');
       const newRequest = {
         senderId: user.uid,
-        senderName: user.displayName,
-        senderPhoto: user.photoURL,
+        senderName: user.displayName || undefined,
+        senderPhoto: user.photoURL || undefined,
         receiverId: targetUser.uid,
         receiverName: targetUser.displayName,
+        receiverPhoto: targetUser.photoURL,
         status: 'pending',
         message: `Hi ${targetUser.displayName}, I'd like to connect and possibly team up!`,
         createdAt: serverTimestamp()
       };
 
       const docRef = await addDoc(requestsRef, newRequest);
-      setRequests(prev => [...prev, { ...newRequest, id: docRef.id }]);
+      setRequests(prev => [...prev, { ...newRequest, id: docRef.id } as TeamRequest]);
     } catch (error) {
       console.error('Error sending request:', error);
     } finally {
