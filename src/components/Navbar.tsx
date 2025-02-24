@@ -37,7 +37,7 @@ export default function Navbar() {
 
           {/* Mobile Menu Button */}
           <div className="sm:hidden">
-            <Button variant="ghost" size="icon" onClick={() => setIsOpen(!isOpen)}>
+            <Button variant="ghost" size="sm" onClick={() => setIsOpen(!isOpen)}>
               {isOpen ? (
                 <X className="h-5 w-5 text-blue-600" />
               ) : (
