@@ -59,9 +59,7 @@ export default function CreateTeam() {
         });
     
         if (connectedUserIds.size > 0) {
-          const usersRef = collection(db, 'users');
           
-          // Fetch users by document ID instead of 'uid' field
           const connectedUsers = await Promise.all(
             Array.from(connectedUserIds).map(async (userId) => {
               const userDocRef = doc(db, 'users', userId as string);
@@ -101,8 +99,6 @@ export default function CreateTeam() {
         members: [user.uid, ...selectedMembers],
         createdAt: new Date().toISOString()
       });
-
-      // Create initial welcome message in subcollection
       const messagesRef = collection(db, 'teams', teamDoc.id, 'messages');
       await addDoc(messagesRef, {
         senderId: user.uid,
@@ -120,7 +116,6 @@ export default function CreateTeam() {
     }
   };
   const filteredConnections = connections.filter(connection => {
-    // Add null/undefined checks
     if (!connection) return false;
     
     const nameMatch = connection.displayName?.toLowerCase().includes(searchTerm.toLowerCase()) || false;
