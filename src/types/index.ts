@@ -34,7 +34,7 @@ export interface Message {
 }
 
 export interface TeamRequest {
-  receiverPhoto: any;
+  receiverPhoto: string;
   id: string;
   senderId: string;
   senderName?: string;
@@ -43,9 +43,9 @@ export interface TeamRequest {
   receiverName?: string;
   status: 'pending' | 'accepted' | 'rejected';
   message?: string;
-  createdAt: any;
-  acceptedAt?: any;
-  rejectedAt?: any;
+  createdAt: Date;
+  acceptedAt?: Date;
+  rejectedAt?: Date | null;
 }
 export type RequestStatus = 'pending' | 'accepted' | 'rejected';
 
