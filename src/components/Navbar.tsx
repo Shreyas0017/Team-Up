@@ -7,7 +7,12 @@ import RequestNotifications from './RequestNotifications';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useState } from 'react';
 
-export default function Navbar({ darkMode, setDarkMode }) {
+interface NavbarProps {
+  darkMode: boolean;
+  setDarkMode: (value: boolean) => void;
+}
+
+export default function Navbar({ darkMode, setDarkMode }: NavbarProps) {
   const { user } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
 
