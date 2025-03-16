@@ -6,7 +6,7 @@
 
 # 🚀 Team-Up The Ultimate Coding Partner Finder
 
-Hackathon Team Builder is a **web application** that helps college students form **effective teams** for hackathons and group projects. It enables **skill-based matching**, efficient **scheduling**, and **seamless collaboration** between team members, fostering a welcoming environment for both beginners and experienced individuals................
+Hackathon Team Builder is a **web application** that helps college students form **effective teams** for hackathons and group projects. It enables **skill-based matching**, efficient **scheduling**, and **seamless collaboration** between team members, fostering a welcoming environment for both beginners and experienced individuals.
 
 ---
 
